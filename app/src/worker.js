@@ -1,5 +1,5 @@
-// Hinge Hunt API. Rounds live in KV: round:<id> (JSON), file:<id>:photo, file:<id>:zip, guesses:<id>.
-// Pipeline per round: photo -> Lux3D G1-Turbo img-to-3D -> Lux3D articulation -> ZIP copied into KV
+// Hinge Hunt API. Rounds live in KV: round:<id> (JSON), file:<id>:zip, guesses:<id>.
+// Pipeline per round: photo -> Aholo asset store -> Lux3D G1-Turbo img-to-3D -> Lux3D articulation -> ZIP copied into KV
 // (Aholo result links expire after 2 h) -> uploader confirms -> live.
 const API = "https://api.aholo.ai/global/lux3d/v1";
 const json = (body, status = 200) => Response.json(body, { status });
@@ -20,24 +20,41 @@ async function task(env, taskId) {
   return { status: d.status, url: d.outputs?.[0]?.content };
 }
 
+// Lux3D can't fetch from workers.dev (tested 2026-11-13), so photos go into Aholo's own asset store first.
+async function uploadPhoto(env, photo) {
+  const tok = await (await fetch("https://api.aholo.ai/global/asset/v1/token", { headers: { Authorization: env.AHOLO_API_KEY } })).json();
+  const { ousToken, globalDomain } = tok.d || tok;
+  const md5 = [...new Uint8Array(await crypto.subtle.digest("MD5", photo))].map(b => b.toString(16).padStart(2, "0")).join("");
+  const form = new FormData();
+  form.append("md5", md5);
+  form.append("file", new Blob([photo], { type: "image/jpeg" }), "photo.jpg");
+  const headers = { "ous-token-v2": ousToken };
+  const up = await (await fetch(`${globalDomain}/ous/api/v2/single/upload`, { method: "POST", headers, body: form })).json();
+  if (up.c !== "0") return null;
+  for (let i = 0; i < 20; i++) {
+    const st = (await (await fetch(`${globalDomain}/ous/api/v2/upload/status`, { headers })).json()).d || {};
+    if (st.status === 5) return st.url;
+    if (st.status === 6 || st.status === 8) return null;
+    await new Promise(ok => setTimeout(ok, 300));
+  }
+  return null;
+}
+
 const getRound = (env, rid) => env.KV.get(`round:${rid}`, "json");
 const putRound = (env, r) => env.KV.put(`round:${r.id}`, JSON.stringify(r));
 const view = r => ({ id: r.id, status: r.status, error: r.error, created: r.created, ready: r.ready });
 
-async function create(req, env, origin) {
-  const type = req.headers.get("content-type");
-  if (!["image/jpeg", "image/png"].includes(type)) return json({ error: "Send a JPEG or PNG photo." }, 415);
+async function create(req, env) {
+  if (req.headers.get("content-type") !== "image/jpeg") return json({ error: "Send a JPEG photo." }, 415);
   const count = +(await env.KV.get("count:created")) || 0;
   if (count >= +env.MAX_ROUNDS) return json({ error: "New rounds are closed: this demo has used its Lux3D credits. The existing rounds still play." }, 429);
   const photo = await req.arrayBuffer();
-  if (photo.byteLength > 10e6) return json({ error: "Photo is over 10 MB." }, 413);
-  const r = { id: id(), secret: id() + id(), status: "mesh", created: Date.now(), ext: type === "image/png" ? "png" : "jpg" };
-  await env.KV.put(`file:${r.id}:photo`, photo, { metadata: { type } });
-  const made = await lux(env, "POST", "/generate/img-to-3d/task/create", {
-    img: `${origin}/f/${r.id}/photo.${r.ext}`, version: "G1-Turbo", outputFormat: ["glb"], faceCount: 50000,
-  });
-  if (made.c !== "0") return json({ error: "Lux3D is busy (3 jobs at once). Try again in a few minutes.", detail: made.m }, 503);
-  r.meshTask = made.d;
+  if (photo.byteLength > 5e6) return json({ error: "Photo is over 5 MB." }, 413);
+  const img = await uploadPhoto(env, photo);
+  if (!img) return json({ error: "The photo upload to Aholo failed. Try again." }, 502);
+  const made = await lux(env, "POST", "/generate/img-to-3d/task/create", { img, version: "G1-Turbo", outputFormat: ["glb"], faceCount: 50000 });
+  if (made.c !== "0") return json({ error: "Lux3D is busy (3 jobs at once). Try again in a few minutes." }, 503);
+  const r = { id: id(), secret: id() + id(), status: "mesh", created: Date.now(), meshTask: made.d };
   await env.KV.put("count:created", String(count + 1));
   await putRound(env, r);
   return json({ id: r.id, secret: r.secret });
@@ -90,11 +107,10 @@ async function guess(req, env, r) {
 }
 
 async function file(env, rid, name) {
-  const key = name === "model.zip" ? `file:${rid}:zip` : name.startsWith("photo.") ? `file:${rid}:photo` : null;
-  const got = key && (await env.KV.getWithMetadata(key, "stream"));
-  if (!got?.value) return new Response("Not found", { status: 404 });
-  return new Response(got.value, {
-    headers: { "Content-Type": got.metadata?.type || "application/zip", "Cache-Control": "public, max-age=86400" },
+  const zip = name === "model.zip" && (await env.KV.get(`file:${rid}:zip`, "stream"));
+  if (!zip) return new Response("Not found", { status: 404 });
+  return new Response(zip, {
+    headers: { "Content-Type": "application/zip", "Cache-Control": "public, max-age=86400" },
   });
 }
 
@@ -105,7 +121,7 @@ export default {
     if (a === "f" && b && c) return file(env, b, c);
     if (a !== "api" || b !== "rounds") return env.ASSETS.fetch(req);
     if (!c) {
-      if (req.method === "POST") return create(req, env, url.origin);
+      if (req.method === "POST") return create(req, env);
       return json((await env.KV.get("list:live", "json")) || []);
     }
     let r = await getRound(env, c);

@@ -41,7 +41,7 @@
   <div>
     <button id="next" hidden>Next round</button>
     <button id="share" hidden>Copy link</button>
-    <label class="btn">Make a round from a photo<input id="photo" type="file" accept="image/jpeg,image/png" hidden></label>
+    <label class="btn">Make a round from a photo<input id="photo" type="file" accept="image/*" hidden></label>
   </div>
 </footer>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","fflate":"https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js"}}</script>
@@ -195,7 +195,13 @@ $("photo").onchange = async e => {
   const f = e.target.files[0];
   if (!f) return;
   $("ask").textContent = "Uploading the photo…";
-  const res = await fetch("/api/rounds", { method: "POST", headers: { "Content-Type": f.type }, body: f });
+  // Shrink to 1024 px JPEG: enough for Lux3D and well under Aholo's 5 MB single-upload limit.
+  const bmp = await createImageBitmap(f);
+  const k = Math.min(1, 1024 / Math.max(bmp.width, bmp.height));
+  const c = new OffscreenCanvas(Math.round(bmp.width * k), Math.round(bmp.height * k));
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  const jpeg = await c.convertToBlob({ type: "image/jpeg", quality: 0.9 });
+  const res = await fetch("/api/rounds", { method: "POST", headers: { "Content-Type": "image/jpeg" }, body: jpeg });
   const body = await res.json();
   if (!res.ok) return ($("ask").textContent = body.error);
   location.search = `?r=${body.id}&s=${body.secret}`;

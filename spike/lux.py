@@ -2,6 +2,7 @@
 
   python3 spike/lux.py glb <image_url> <name>            # G1-Turbo image -> GLB
   python3 spike/lux.py text "<prompt>" <name>              # G1-Turbo text -> GLB
+  python3 spike/lux.py get <task_id>                       # print task status once
   python3 spike/lux.py articulate <glb_url> "<prompt>" <name>
 
 Reads AHOLO_API_KEY from the environment or .env in the project root.
@@ -62,6 +63,9 @@ if mode == "glb":
 elif mode == "text":
     run("/generate/text-to-3d/task/create",
         {"prompt": src, "version": "G1-Turbo", "outputFormat": ["glb"], "faceCount": 50000}, sys.argv[3])
+elif mode == "get":
+    d = call("GET", f"/generate/task/get?taskid={src}").get("d") or {}
+    print(d.get("status"), (d.get("outputs") or [{}])[0].get("content", ""), json.dumps({k: v for k, v in d.items() if k != "outputs"}, ensure_ascii=False)[:300])
 elif mode == "articulate":
     run("/articulation-animation/task/create", {"glbUrl": src, "prompt": sys.argv[3]}, sys.argv[4])
 else:
