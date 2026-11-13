@@ -53,6 +53,8 @@ function plate() {
   out.push(S(k.slabOf(PLATE, -PLATE_H, PLATE_H, P, 8, 1.6), { tone: "mid", inner: L(k.sideSeam(PLATE, -4, P, 8), { tone: "faint" }) }));
   out.push(L(k.planOutline(k.insetPlan(PLATE, 5), 0, P), { tone: "lo" }));
   for (const [x, y] of k.corners(PLATE, 11)) out.push(screw(x, y, 0, 2.2));
+  // tapped holes on a 12-unit pitch, like an optical breadboard; whatever stands on the plate covers its own
+  out.push(D(k.dotGrid(-144, -108, 25, 19, 12, 0, P).filter((_, i) => { const c = i % 25, r = Math.floor(i / 25); return !((c === 0 || c === 24) && (r === 0 || r === 18)); }), { size: 0.42, tone: "lo" }));
   const strip = { x: -136, y: PLATE.y + PLATE.d - 16, w: 272, d: 7, r: 1 };
   out.push(S(k.slabOf(strip, 0, 0.6, P, 3), { tone: "lo", crease: "none" }));
   const t = k.topTicks(strip.x + 4, strip.x + strip.w - 4, 4, 5, strip.y + 0.8, 0.6, [2, 3.6], P);
@@ -72,6 +74,8 @@ function lamp() {
   const { x, y } = LAMP;
   out.push(`<path class="iso-halo" d="${k.haloOf({ x: x - 16, y: y - 16, w: 32, d: 32, r: 16 }, 0, 0.1, P)}" style="filter:blur(4px)"/>`);
   out.push(S(k.cylinder(x, y, 16, 0, 5, P, 48, 0.6), { tone: "mid" }));
+  out.push(S(k.slabOf({ x: x + 7, y: y - 3, w: 6, d: 6, r: 1 }, 5, 1.6, P, 2, 0.3), { tone: "mid" }));
+  out.push(L(k.lineOnTop([x + 10, y - 3], [x + 10, y + 3], 6.6, P), { tone: "lo" }));
   out.push(S(k.cylinder(x, y, 5, 5, 4, P, 24), { tone: "mid" }));
   out.push(S(k.cylinder(x, y, 2.6, 9, 82, P, 20), { tone: "mid", crease: "none", inner: L([30, 60].map((z) => k.sideArc(x, y, 2.6, z, P, 12)).join(""), { tone: "faint" }) }));
   const knuckle = [x, y, 94];
@@ -117,6 +121,7 @@ function drawer(i) {
   const face = y + d;
   const holder = k.pathOf([[x + 12, z + 3.5], [x + 30, z + 3.5], [x + 30, z + 9.5], [x + 12, z + 9.5]].map(([px, pz]) => at([px, face, pz])), true);
   out.push(L(holder, { tone: "lo" }));
+  out.push(L(k.pathOf([[x + 14, z + 5.3], [x + 27, z + 5.3]].map(([px, pz]) => at([px, face, pz]))) + k.pathOf([[x + 14, z + 7.6], [x + 23, z + 7.6]].map(([px, pz]) => at([px, face, pz]))), { tone: "lo", free: true }));
   out.push(`<path data-part="tab${i}" class="iso-line" data-tone="faint" d="${holder}" style="stroke:none"/>`);
   out.push(S(k.slabOf({ x: x + w - 22, y: face, w: 12, d: 2.6, r: 1 }, z + 5, 2.6, P, 2), { tone: "mid", crease: "none" }));
   out.push(D([at([x + 8, face, z + DRAWER_H / 2]), at([x + w - 8, face, z + DRAWER_H / 2])], { size: 0.4 }));
@@ -127,6 +132,10 @@ function rackFront() {
   const top = RACK_Z0 + DRAWERS * DRAWER_H + 2;
   const out = [];
   out.push(S(k.slabOf({ x: x + w - 4, y, w: 4, d, r: 1 }, RACK_Z0, top - RACK_Z0, P, 3), { tone: "mid" }));
+  const side = x + w;
+  const slot = (z) => k.pathOf(k.roundedPlan({ x: y + 9, y: z, w: d - 18, d: 2.2, r: 1.1 }, 4).map(([u, v]) => at([side, u, v])), true);
+  out.push(L([0, 1, 2, 3, 4, 5].map((i) => slot(top - 14 - i * 6)).join(""), { tone: "lo" }));
+  out.push(D([at([side, y + 4, RACK_Z0 + 4]), at([side, y + d - 4, RACK_Z0 + 4]), at([side, y + 4, top - 4]), at([side, y + d - 4, top - 4])], { size: 0.45 }));
   out.push(S(k.slabOf({ x, y, w, d, r: 2 }, top, 4, P, 4, 0.6), { tone: "mid" }));
   out.push(L(k.planOutline(k.insetPlan({ x, y, w, d, r: 2 }, 3), top + 4, P), { tone: "faint" }));
   for (const [sx, sy] of k.corners({ x, y, w, d, r: 2 }, 5)) out.push(D([at([sx, sy, top + 4])], { size: 0.45 }));
@@ -142,6 +151,7 @@ function turntable() {
   out.push(S(k.cylinder(x, y, R, 8, top - 8, P, 96, 0.8), { tone: "hi", crease: "lo", inner: side }));
   out.push(L(k.knurl(x, y, R, 8.4, top - 3.6, 120, P, 0.3), { tone: "lo" }));
   out.push(L(k.ring(x, y, R - 7, top, P, 96), { tone: "lo" }));
+  out.push(L([R - 18, R - 27, R - 36].map((r) => k.ring(x, y, r, top, P, 96)).join(""), { tone: "faint" }));
   out.push(L(k.ring(x, y, 5, top, P, 24), { tone: "lo" }));
   // index bracket in front: a block on the plate with a pointer that reaches the platter rim
   const ix = x + (R + 6) * Math.SQRT1_2, iy = y + (R + 6) * Math.SQRT1_2;
@@ -160,7 +170,9 @@ function timer() {
   const body = { x: x - R - 5, y: y - R - 5, w: 2 * R + 10, d: 2 * R + 10, r: 4 };
   const out = [`<path class="iso-halo" d="${k.haloOf(body, 0, 0.1, P)}" style="filter:blur(4px)"/>`];
   out.push(S(k.slabOf(body, 0, 10, P, 5, 0.8), { tone: "mid", inner: L(k.sideSeam(body, 3, P, 5), { tone: "faint" }) }));
-  for (const [sx, sy] of k.corners(body, 3.5)) out.push(D([at([sx, sy, 10])], { size: 0.45 }));
+  for (const [sx, sy] of k.corners(body, 3.5).slice(1)) out.push(D([at([sx, sy, 10])], { size: 0.45 }));
+  out.push(S(k.cylinder(body.x + 4.6, body.y + 4.6, 3.4, 10, 1, P, 20), { tone: "lo" }));
+  out.push(S(k.cylinder(body.x + 4.6, body.y + 4.6, 2.5, 11, 2.2, P, 20, 0.3), { tone: "mid" }));
   out.push(S(k.cylinder(x, y, R, 10, 6, P, 64, 0.6), { tone: "hi", crease: "lo" }));
   out.push(L(k.knurl(x, y, R, 13, 16, 80, P, 0.3), { tone: "lo" }));
   out.push(L(k.ring(x, y, R - 2, 16, P, 64), { tone: "lo" }));
@@ -184,8 +196,6 @@ function gauge() {
   const post = [x - 8, y - 6];
   const out = [`<path class="iso-halo" d="${k.haloOf(mag, 0, 0.1, P)}" style="filter:blur(4px)"/>`];
   // anvil the plunger rests on
-  const anvil = { x: x + 14, y: y - 4, w: 12, d: 12, r: 1 };
-  out.push(S(k.slabOf(anvil, 0, 6, P, 2, 0.4), { tone: "mid" }));
   out.push(S(k.slabOf(mag, 0, 9, P, 5, 0.8), { tone: "mid" }));
   out.push(S(k.slabOf(k.insetPlan(mag, 0.8), 9, 9, P, 5, 0.8), { tone: "mid" }));
   out.push(L(k.planOutline(k.insetPlan(mag, 3), 18, P), { tone: "faint" }));
@@ -202,6 +212,9 @@ function gauge() {
   // arm from the clamp to the dial lug
   const arm = { x: post[0] + 6, y: y - 2.5, w: x + R + 6 - post[0] - 6 + 10, d: 5, r: 1.6 };
   out.push(S(k.slabOf(arm, z + 13, 4, P, 3, 0.4), { tone: "mid" }));
+  // the anvil sits nearer than the magnet base, so it is drawn after it
+  const anvil = { x: x + 14, y: y - 4, w: 12, d: 12, r: 1 };
+  out.push(S(k.slabOf(anvil, 0, 6, P, 2, 0.4), { tone: "mid" }));
   // stem and plunger down to the anvil
   const px = x + 20, py = y + 2;
   out.push(S(k.cylinder(px, py, 1.3, 6, z - 6, P, 16), { tone: "hi", crease: "none" }));
@@ -247,6 +260,38 @@ function counter() {
   return out.join("");
 }
 
+
+// a vernier caliper lying on the bench behind the turntable
+function caliper() {
+  const out = [`<path class="iso-halo" d="${k.haloOf({ x: -104, y: -118, w: 92, d: 18, r: 3 }, 0, 0.1, P)}" style="filter:blur(3px)"/>`];
+  out.push(S(k.slabOf({ x: -101, y: -118, w: 5, d: 16, r: 0.8 }, 0, 1.6, P, 2, 0.3), { tone: "mid" }));
+  const beam = { x: -98, y: -108, w: 88, d: 6, r: 0.8 };
+  out.push(S(k.slabOf(beam, 0, 1.6, P, 2, 0.3), { tone: "hi", crease: "lo" }));
+  const t = k.topTicks(beam.x + 3, beam.x + beam.w - 3, 2, 5, beam.y, 1.6, [1.3, 2.4], P);
+  out.push(L(t.minor, { tone: "lo" }), L(t.major, { tone: "mid" }));
+  out.push(S(k.slabOf({ x: -62, y: -118, w: 4, d: 9, r: 0.6 }, 0, 1.6, P, 2, 0.3), { tone: "mid" }));
+  const slider = { x: -63, y: -110, w: 17, d: 10, r: 1 };
+  out.push(S(k.slabOf(slider, 0, 3.2, P, 3, 0.5), { tone: "mid" }));
+  out.push(L(k.planOutline({ x: -60, y: -109, w: 11, d: 4.4, r: 0.6 }, 3.2, P, 2), { tone: "faint" }));
+  out.push(S(k.cylinder(-50, -104.6, 1.5, 3.2, 1.6, P, 14), { tone: "mid" }));
+  out.push(S(k.cylinder(-55, -98.4, 2.4, 0.2, 3, P, 18), { tone: "mid" }));
+  out.push(L(k.knurl(-55, -98.4, 2.4, 0.2, 3.2, 14, P), { tone: "lo" }));
+  return out.join("");
+}
+
+// the turntable's lock knob on a pillow block beside the platter
+function lockKnob() {
+  const block = { x: -91, y: 6, w: 12, d: 12, r: 1.6 };
+  const out = [`<path class="iso-halo" d="${k.haloOf(block, 0, 0.1, P)}" style="filter:blur(3px)"/>`];
+  out.push(S(k.slabOf(block, 0, 9, P, 3, 0.5), { tone: "mid", inner: L(k.sideSeam(block, 3, P, 3), { tone: "faint" }) }));
+  out.push(D(k.corners(block, 2.4).map(([x, y]) => at([x, y, 9])), { size: 0.4 }));
+  out.push(S(k.cylinder(-85, 12, 2, 9, 2, P, 14), { tone: "mid" }));
+  out.push(S(k.cylinder(-85, 12, 4.4, 11, 4.4, P, 28, 0.4), { tone: "mid" }));
+  out.push(L(k.knurl(-85, 12, 4.4, 11, 15.4, 28, P), { tone: "lo" }));
+  out.push(L(k.lineOnTop([-85, 12], [-80.6, 12], 15.4, P), { tone: "hi" }));
+  return out.join("");
+}
+
 // back to front by depth of each instrument's centre
 const pieces = [
   [LAMP.x, LAMP.y, lamp()],
@@ -255,6 +300,8 @@ const pieces = [
   [TT.x, TT.y, turntable() + `<g data-part="ttTicks"><path class="iso-line" data-tone="lo" d="${ttTicks(0).minor}"/><path class="iso-line" data-tone="mid" d="${ttTicks(0).major}"/></g><path class="iso-line" data-tone="hi" d="${ttPointer()}"/>`],
   [TIMER.x, TIMER.y, timer() + `<path data-part="timerNeedle" class="iso-line" data-tone="lit" data-free="start" style="stroke-width:1.1" d="${needle(TIMER.x, TIMER.y, TIMER.R, 16, 0)}"/>`],
   [COUNTER.x + COUNTER.w / 2, COUNTER.y + COUNTER.d / 2, counter()],
+  [-55, -108, caliper()],
+  [-85, 12, lockKnob()],
 ].sort((a, b) => k.depthOf([a[0], a[1], 0], P) - k.depthOf([b[0], b[1], 0], P)).map((p) => p[2]);
 
 const svg = k.figureSvg({
@@ -291,5 +338,5 @@ writeFileSync(join(HERE, "../public/bench.js"), out);
 writeFileSync(join(HERE, "../../spike/bench.js"), out); // for spike pages
 
 // a preview page for checking the drawing on its own
-writeFileSync(join(HERE, "../../spike/bench-preview.html"), k.pageHtml({ title: "Bench", theme: "light", width: 1200, body: `<div style="max-width:960px;margin:20px auto">${svg}</div>`, script: "" }).replace("</style>", `${CSS.slice(k.ISO_CSS.length)}</style>`));
+writeFileSync(join(HERE, "../../spike/bench-preview.html"), k.pageHtml({ title: "Bench", theme: "dark", width: 1200, body: `<div class="iso hh-bench" style="max-width:1200px;margin:0 auto;background:#17191c">${svg}</div>`, script: "" }).replace("</style>", `${CSS.slice(k.ISO_CSS.length)}</style>`));
 console.log("wrote public/bench.js and spike/bench-preview.html", (out.length / 1024).toFixed(0), "KB");

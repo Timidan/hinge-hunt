@@ -55,6 +55,11 @@
   #reticle.on svg { transform: rotate(45deg) scale(.86); }
   #reticle.lock { color: var(--red); }
   #reticle.lock svg { transform: rotate(45deg) scale(.5); }
+  #reticle.nope { animation: nope .3s; }
+  @keyframes nope { 25% { margin-left: -34px; } 50% { margin-left: -22px; } 75% { margin-left: -31px; } }
+  [data-part^="drawer"] { transition: transform .45s cubic-bezier(.3, .8, .3, 1); }
+  .stage > canvas { cursor: grab; }
+  .stage > canvas:active { cursor: grabbing; }
 
   /* round intro: a case-file band sweeps across */
   #intro { position: absolute; left: -6%; right: -6%; top: 36%; z-index: 5; padding: 18px 9% 22px; transform: translateX(110%) rotate(-4deg);
@@ -288,6 +293,7 @@ const noise = (dur, vol, at) => voice(() => {
 }, dur, vol, at);
 const sfx = {
   click: () => noise(0.025, 0.35),
+  thunk: () => { tone(130, 48, 0.2, "sine", 0.4); noise(0.03, 0.18); },
   whoosh: () => { noise(0.3, 0.12); tone(220, 900, 0.25, "sawtooth", 0.025); },
   tick: () => tone(1500, 1500, 0.04, "square", 0.04),
   chirp: () => tone(700, 2600, 0.14, "square", 0.04),
@@ -340,17 +346,51 @@ const floor = new THREE.Mesh(new THREE.CircleGeometry(TT.R - 1, 96), new THREE.S
 floor.position.copy(platter);
 floor.receiveShadow = true;
 scene.add(floor);
+// The lamp's light on the platter: warm while hunting, the detector's mint in ghost view. It only adds light
+// (alpha stays 0, so the canvas composites it additively over the drawing) and fades to nothing before the rim.
+const poolAt = (() => {
+  const L = B.LIGHT_AT, d = [TT.x - L[0], TT.y - L[1], 40 - L[2]], k = (TT.top - L[2]) / d[2];
+  return new THREE.Vector2(L[0] + d[0] * k, -(L[1] + d[1] * k));
+})();
+const WARM = new THREE.Color(1, 0.8, 0.55), UV = new THREE.Color(0.3, 0.95, 0.85);
+const pool = new THREE.Mesh(new THREE.CircleGeometry(TT.R - 1.5, 96), new THREE.ShaderMaterial({
+  uniforms: { uColor: { value: WARM.clone() }, uGain: { value: 0.2 }, uAt: { value: poolAt }, uMid: { value: new THREE.Vector2(platter.x, platter.y) }, uR: { value: TT.R } },
+  vertexShader: "varying vec2 vP;void main(){vec4 w=modelMatrix*vec4(position,1.);vP=w.xy;gl_Position=projectionMatrix*viewMatrix*w;}",
+  fragmentShader: `uniform vec3 uColor;uniform float uGain;uniform vec2 uAt;uniform vec2 uMid;uniform float uR;varying vec2 vP;
+float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
+void main(){float d=length(vP-uAt)/(uR*.78);float f=exp(-d*d*2.)*(1.-smoothstep(uR-16.,uR-3.,length(vP-uMid)));
+vec3 c=uColor*uGain*f+(h(gl_FragCoord.xy)-.5)/255.;gl_FragColor=vec4(max(c,0.),0.);}`,
+  transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendEquation: THREE.AddEquation,
+  blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor,
+}));
+pool.position.copy(platter).add(new THREE.Vector3(0, 0, 0.05));
+scene.add(pool);
 // spin turns with the platter; fix stands a y-up glTF upright (z-up) at bench scale
-const spinner = new THREE.Group(), fix = new THREE.Group(), centre = new THREE.Group();
+const spinner = new THREE.Group(), lift = new THREE.Group(), fix = new THREE.Group(), centre = new THREE.Group();
 spinner.position.copy(platter);
 fix.rotation.x = Math.PI / 2;
-spinner.add(fix);
+spinner.add(lift);
+lift.add(fix);
 fix.add(centre);
 scene.add(spinner);
 const GHOST = new THREE.MeshStandardMaterial({ color: 0x1f3a3b, metalness: 0.55, roughness: 0.32 });
 const loader = new GLTFLoader();
 const nums = (el, attr, d = "0 0 0") => (el?.getAttribute(attr) ?? d).trim().split(/\s+/).map(Number);
-let obj = null, marks = [], swing = null, spin = false, grow = null, turn = 0;
+let obj = null, marks = [], swing = null, spin = false, grow = null, turn = 0, fling = 0, dragging = false;
+const still = matchMedia("(prefers-reduced-motion: reduce)");
+// Small tween runner, stepped by the render loop. Reduced motion jumps to the end.
+const tweens = new Set();
+const ease = { out: t => 1 - (1 - t) ** 3, in: t => t * t * t,
+  bounce: t => { const n = 7.5625, d = 2.75; return t < 1 / d ? n * t * t : t < 2 / d ? n * (t -= 1.5 / d) * t + 0.75 : t < 2.5 / d ? n * (t -= 2.25 / d) * t + 0.9375 : n * (t -= 2.625 / d) * t + 0.984375; } };
+const tween = (ms, fn, curve = ease.out) => new Promise(done => tweens.add({ t0: performance.now(), ms: still.matches ? 0 : ms, fn, curve, done }));
+// The object is lifted off the platter and the next one drops onto it.
+const LIFT = 190;
+async function takeAway() { if (!obj) return; await tween(240, e => (lift.position.z = e * LIFT), ease.in); obj.group.visible = false; }
+async function setDown() { lift.position.z = LIFT; await tween(620, e => (lift.position.z = LIFT * (1 - e)), ease.bounce); }
+function ghostLight(on) {
+  const u = pool.material.uniforms, from = u.uColor.value.clone(), to = on ? UV : WARM, g0 = u.uGain.value, g1 = on ? 0.26 : 0.2;
+  tween(300, e => { u.uColor.value.copy(from).lerp(to, e); u.uGain.value = g0 + (g1 - g0) * e; });
+}
 
 function resize() {
   const r = stage.getBoundingClientRect();
@@ -376,7 +416,8 @@ const dialNeedle = (d, share, from = 0, span = Math.PI * 2) => {
 };
 const setTimer = share => parts("timerNeedle").setAttribute("d", dialNeedle(B.TIMER, share));
 // the dial indicator reads the miss: full scale is 30% of the object's size, where a tap earns nothing
-const setGauge = share => parts("gaugeNeedle").setAttribute("d", dialNeedle(B.GAUGE_DIAL, Math.min(1, Math.max(0, share)), -Math.PI * 0.75, Math.PI * 1.5));
+let gaugeAt = 0;
+const setGauge = share => (gaugeAt = share, parts("gaugeNeedle")).setAttribute("d", dialNeedle(B.GAUGE_DIAL, Math.min(1, Math.max(0, share)), -Math.PI * 0.75, Math.PI * 1.5));
 function setCounter(n) { String(Math.min(999, n)).padStart(3, "0").split("").forEach((d, i) => (parts(`digit${i}`).textContent = d)); }
 // drawer i slides out toward the viewer when its object is on the turntable; its tab shows the result
 const drawerOut = K.axisVector(P, [0, 18, 0]);
@@ -391,6 +432,10 @@ function setDrawers(open, done = []) {
 
 const zips = {};
 const fetchZip = id => (zips[id] ??= fetch(`/f/${id}/model.zip`).then(r => r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.status))));
+// Round details and unpacked objects are cached by id, so the next object is ready before it is needed.
+const roundInfo = {}, prepared = {};
+const getRound = id => (roundInfo[id] ??= api(`/api/rounds/${id}`).catch(err => { delete roundInfo[id]; throw err; }));
+const prepare = id => (prepared[id] ??= getRound(id).then(loadFresh).catch(err => { delete prepared[id]; throw err; }));
 // Model downloads sometimes arrive cut short; a cut ZIP fails to unzip, so drop it and fetch again.
 async function loadFresh(round) {
   for (let i = 0; ; i++) {
@@ -442,6 +487,7 @@ function clearMarks() { for (const m of marks) m.removeFromParent(); marks = [];
 function place(o) {
   if (obj) obj.group.removeFromParent();
   clearMarks();
+  swing = null; // a new object arrives closed
   obj = o;
   setPose(1);
   const box = new THREE.Box3().setFromObject(o.group);
@@ -535,6 +581,12 @@ renderer.setAnimationLoop(t => {
   last = t;
   if (obj && swing !== null) setPose((1 - Math.cos((t - swing) / 650)) / 2);
   if (spin) setTurn(turn + dt * 0.35); // the title turns the platter slowly
+  else if (!dragging && Math.abs(fling) > 0.01) { setTurn(turn + fling * dt); fling *= Math.exp(-dt * 3.5); } // a flung platter coasts to a stop
+  for (const tw of tweens) {
+    const k = tw.ms ? Math.min(1, (t - tw.t0) / tw.ms) : 1;
+    tw.fn(tw.curve(Math.max(0, k)));
+    if (k >= 1) { tweens.delete(tw); tw.done(); }
+  }
   if (grow) grow.mesh.scale.y = Math.max(0.001, Math.min(1, (t - grow.t0) / 250)); // the hinge line draws in
   renderer.render(scene, camera);
 });
@@ -561,23 +613,44 @@ const rayAt = e => {
   ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
   return ray;
 };
+let lastMove = 0;
 renderer.domElement.addEventListener("pointerdown", e => {
   down = [e.clientX, e.clientY];
   dragFrom = e.clientX;
+  dragging = true;
+  fling = 0;
   renderer.domElement.setPointerCapture(e.pointerId);
   if (tapHandler && obj) { reticle.hidden = false; aimAt(e); }
 });
 renderer.domElement.addEventListener("pointermove", e => {
   if (dragFrom === null || !obj) return;
-  setTurn(turn + (e.clientX - dragFrom) * 0.012);
+  const step = (e.clientX - dragFrom) * 0.012, now = performance.now();
+  setTurn(turn + step);
+  fling = step / Math.max(0.008, (now - lastMove) / 1000);
+  lastMove = now;
   dragFrom = e.clientX;
   spin = false;
 });
 renderer.domElement.addEventListener("pointerup", e => {
   dragFrom = null;
+  dragging = false;
+  if (performance.now() - lastMove > 80) fling = 0; // released while still: no coast
   if (!tapHandler || !down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
   const hit = rayAt(e).intersectObject(obj.group, true)[0];
-  if (hit) tapHandler(obj.group.worldToLocal(hit.point.clone()));
+  if (hit) return tapHandler(obj.group.worldToLocal(hit.point.clone()));
+  // a tap beside the object: the reticle shakes it off
+  reticle.classList.remove("nope");
+  void reticle.offsetWidth;
+  reticle.classList.add("nope");
+  sfx.tick();
+});
+// Keys: Enter or Space presses the main button, arrows turn the platter.
+addEventListener("keydown", e => {
+  if (e.target.closest?.("button, label, input")) return;
+  if (e.key === "ArrowLeft" || e.key === "ArrowRight") { fling = e.key === "ArrowLeft" ? -2.4 : 2.4; spin = false; return; }
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const go = [...document.querySelectorAll(".screen:not([hidden]) .btn.go, .screen:not([hidden]) .btn.light")].find(b => !b.hidden && b.offsetParent);
+  if (go) { e.preventDefault(); go.click(); }
 });
 
 async function startRun(ids) {
@@ -592,25 +665,42 @@ async function playRound() {
   show("round");
   reticle.hidden = true;
   reticle.className = "";
-  $("ask").textContent = "Loading the object…";
+  $("ask").textContent = "";
+  const slow = setTimeout(() => ($("ask").textContent = "Loading the object…"), 400); // only when the next object really is late
   $("hint").textContent = "";
   hud("");
   pips();
   parts("timerNeedle").dataset.tone = "lit";
   setTimer(0);
-  setGauge(0);
+  const was = gaugeAt;
+  tween(400, e => setGauge(was * (1 - e)));
   setCounter(total);
   setDrawers(at, results);
-  const round = await api(`/api/rounds/${id}`);
-  try { place(await loadFresh(round)); }
+  ghostLight(false);
+  const [round] = await Promise.all([getRound(id), obj?.id === id ? null : takeAway()]);
+  try {
+    if (obj?.id !== id) {
+      place(await prepare(id));
+      delete prepared[id]; // a placed object is used up; a replay prepares a fresh one
+      obj.id = id;
+      await setDown();
+      sfx.thunk();
+    } else { // the title's object is already on the platter: bring it round to the front the short way
+      const from = Math.atan2(Math.sin(turn), Math.cos(turn));
+      tween(500, e => setTurn(from * (1 - e)));
+    }
+    spin = false;
+  }
   catch {
+    clearTimeout(slow);
     $("ask").textContent = "This object didn't load. Skipping it.";
     results.push({ name: round.name || "your object", gain: 0 });
     await wait(1800);
     return ++at < run.length ? playRound() : finish();
   }
+  clearTimeout(slow);
   swing = null;
-  if (run[at + 1]) fetchZip(run[at + 1]); // preload the next object while this one is played
+  if (run[at + 1]) prepare(run[at + 1]); // the next object is fetched and unpacked while this one is played
   // Intro band: which object this is, then the question and the clock.
   $("ask").textContent = "";
   $("introOf").textContent = `Object ${at + 1} of ${run.length}`;
@@ -668,6 +758,7 @@ async function answer(p, round) {
   await wait(150);
   reticle.hidden = true;
   win.classList.add("ghost");
+  ghostLight(true);
   xray(true);
   grow = { mesh: rod(...hinge), t0: performance.now() };
   sfx.chirp();
@@ -717,7 +808,10 @@ function finish() {
   hud("");
   pips();
   swing = null;
-  if (obj) { obj.group.removeFromParent(); obj = null; }
+  ghostLight(false);
+  const leaving = obj;
+  obj = null; // the object is lifted off the platter as the case closes
+  if (leaving) tween(240, e => (lift.position.z = e * LIFT), ease.in).then(() => leaving.group.removeFromParent());
   clearMarks();
   const max = run.length * 100, share = total / max;
   const t0 = performance.now();
@@ -857,7 +951,9 @@ async function title() {
   if (!rounds.length) { $("play").disabled = true; return; }
   // The first object turns slowly in the window behind the title plates.
   fetchZip(rounds[0]).then(async () => {
-    if (!$("title").hidden) { place(await loadObject(await api(`/api/rounds/${rounds[0]}`))); spin = true; }
+    if (!$("title").hidden) { place(await loadObject(await getRound(rounds[0]))); obj.id = rounds[0]; spin = true; setDown().then(sfx.thunk); }
+    for (const id of rounds.slice(1)) { fetchZip(id); getRound(id); } // today's other objects are about 2 MB each: fetch them now so rounds never wait
+    if (rounds[1]) prepare(rounds[1]);
   }).catch(() => delete zips[rounds[0]]); // the round retries it
   // The plates swing open on their hinge, then the hunt starts.
   $("play").onclick = () => { sfx.click(); $("plates").classList.add("open"); setTimeout(() => startRun(rounds), 450); };
