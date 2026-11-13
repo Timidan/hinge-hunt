@@ -3,47 +3,95 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hinge Hunt</title>
-<meta name="description" content="Guess where an object pivots. The real mechanism, found by Lux3D from one photo, opens to show who was right.">
+<meta name="description" content="Five objects a day. Tap where each one pivots, then watch the real mechanism, found by Lux3D from a single photo, open.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
-  :root { color-scheme: light dark; --bg: #f3f1ec; --ink: #161616; --muted: #5d5a55; --line: #c9c4ba; --you: #d2451e; --true: #1f8a4c; --crowd: #6b6b6b; }
-  @media (prefers-color-scheme: dark) { :root { --bg: #151515; --ink: #ecebe7; --muted: #a29e97; --line: #3a3835; --crowd: #8d8d8d; } }
+  /* Swiss poster: one cobalt field, giant tight lowercase grotesk, square cream labels, one red accent. */
+  :root { color-scheme: light; --field: #2e63b8; --snow: #f4f6f8; --red: #d6203f; --label: #fbf3e6; --navy: #1e2e5e; }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.4 system-ui, sans-serif; height: 100dvh; display: grid; grid-template-rows: auto 1fr auto; }
-  header, footer { padding: 14px 16px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
-  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
-  #ask { font-size: 22px; margin: 0; flex: 1 1 100%; font-weight: 500; }
-  #stage { position: relative; min-height: 0; }
-  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
-  #msg { position: absolute; inset: auto 16px 16px; color: var(--muted); }
-  #score { font-size: 22px; font-variant-numeric: tabular-nums; }
-  button, label.btn { font: inherit; background: none; color: var(--ink); border: 1px solid var(--line); padding: 8px 14px; border-radius: 6px; cursor: pointer; }
-  button.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-  button:focus-visible, label.btn:focus-within { outline: 2px solid var(--you); outline-offset: 2px; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--field); color: var(--snow); font: 500 16px/1.3 "Inter Tight", system-ui, sans-serif; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; }
+  .screen { position: fixed; inset: 0; pointer-events: none; padding: 20px 20px 24px; display: flex; flex-direction: column; }
+  .screen > * { pointer-events: auto; }
+  .big { font-weight: 900; letter-spacing: -0.05em; line-height: 0.8; margin: 0; text-wrap: balance; }
+  h1.big { font-size: clamp(88px, 22vw, 300px); }
+  .prompt { font-size: clamp(40px, 7.5vw, 112px); max-width: 14ch; }
+  .points { font-size: clamp(96px, 20vw, 280px); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+  .spacer { flex: 1; pointer-events: none; }
+  .label { background: var(--label); color: var(--navy); border: 1px solid var(--navy); padding: 14px 18px; font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  button.label, label.label { font: inherit; font-weight: 700; cursor: pointer; }
+  button.go { background: var(--red); color: var(--snow); border-color: var(--red); }
+  button:focus-visible, label.label:focus-within { outline: 3px solid var(--snow); outline-offset: 2px; }
+  .lines { color: var(--snow); font-weight: 700; font-size: clamp(18px, 2.2vw, 24px); margin: 16px 0 0; max-width: 34ch; }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  #timer { position: fixed; left: 0; bottom: 0; height: 6px; background: var(--snow); width: 100%; transform-origin: left; }
+  table { border-collapse: collapse; }
+  td { padding: 4px 28px 4px 0; font-weight: 700; font-size: clamp(22px, 3vw, 34px); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .of { font-size: 0.3em; letter-spacing: -0.02em; }
+  td + td { text-align: right; }
   [hidden] { display: none !important; }
-  .key span { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 10px; vertical-align: baseline; }
-  footer { color: var(--muted); font-size: 14px; justify-content: space-between; }
 </style>
-<header>
-  <h1>Hinge Hunt</h1>
-  <p id="ask">Loading a round…</p>
-</header>
-<div id="stage"><p id="msg"></p></div>
-<footer>
-  <div id="result" hidden>
-    <span id="score"></span>
-    <span class="key"><span style="background:var(--you)"></span>you<span style="background:var(--true)"></span>real pivot<span style="background:var(--crowd)"></span>others</span>
+
+<section class="screen" id="title">
+  <h1 class="big">hinge<br>hunt</h1>
+  <p class="lines" id="challenge" hidden></p>
+  <div class="spacer"></div>
+  <div class="row">
+    <button class="label go" id="play">Play today's objects</button>
+    <span class="label" id="today"></span>
+    <label class="label">Add your own object<input class="photo" type="file" accept="image/*" hidden></label>
   </div>
-  <div id="review" hidden>
-    <span>Is this how it opens?</span>
-    <button class="primary" id="yes">Yes, publish</button>
-    <button id="no">No, discard</button>
+</section>
+
+<section class="screen" id="round" hidden>
+  <div class="top">
+    <h2 class="big prompt" id="ask"></h2>
+    <span class="label" id="hud"></span>
   </div>
-  <div>
-    <button id="next" hidden>Next round</button>
-    <button id="share" hidden>Copy link</button>
-    <label class="btn">Make a round from a photo<input id="photo" type="file" accept="image/*" hidden></label>
+  <div class="spacer"></div>
+  <p class="lines" id="hint"></p>
+  <div id="timer"></div>
+</section>
+
+<section class="screen" id="reveal" hidden>
+  <div class="top">
+    <p class="big points" id="gain"></p>
+    <span class="label" id="hud2"></span>
   </div>
-</footer>
+  <p class="lines" id="verdict"></p>
+  <div class="spacer"></div>
+  <div class="row"><button class="label go" id="next">Next object</button></div>
+</section>
+
+<section class="screen" id="end" hidden>
+  <p class="big points" id="total"></p>
+  <table class="lines" id="rows"></table>
+  <div class="spacer"></div>
+  <div class="row">
+    <button class="label go" id="share">Challenge a friend</button>
+    <label class="label">Add your own object<input class="photo" type="file" accept="image/*" hidden></label>
+  </div>
+</section>
+
+<section class="screen" id="make" hidden>
+  <h2 class="big prompt" id="makeAsk"></h2>
+  <p class="lines" id="makeHint"></p>
+  <div class="spacer"></div>
+  <div class="row" id="reviewRow" hidden>
+    <button class="label go" id="yes">Yes, publish it</button>
+    <button class="label" id="flip">Flip the direction</button>
+    <button class="label" id="no">Discard</button>
+  </div>
+  <div class="row" id="madeRow" hidden>
+    <button class="label go" id="playMine">Play it</button>
+    <button class="label" id="copyMine">Copy the link</button>
+  </div>
+</section>
+
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","fflate":"https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js"}}</script>
 <script type="module">
 import * as THREE from "three";
@@ -52,184 +100,284 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { unzipSync } from "fflate";
 
+const ROUND_SECONDS = 15;
+const MAX_SWING = 1.3; // rad. Lux3D's limits are generic (often 2 rad); real hinges rarely swing that far.
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
-const stageEl = $("stage");
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const show = id => { for (const s of document.querySelectorAll(".screen")) s.hidden = s.id !== id; };
+const api = async (path, opts) => { const r = await fetch(path, opts); const b = await r.json(); if (!r.ok) throw new Error(b.error); return b; };
+
+// ---------- 3D ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-stageEl.prepend(renderer.domElement);
+document.body.prepend(renderer.domElement);
 const scene = new THREE.Scene();
 scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment()).texture;
-const camera = new THREE.PerspectiveCamera(40, 1, 0.001, 100);
+const camera = new THREE.PerspectiveCamera(35, 1, 0.001, 100);
 const controls = new OrbitControls(camera, renderer.domElement);
+controls.enablePan = false;
 const loader = new GLTFLoader();
 const nums = (el, attr, d = "0 0 0") => (el?.getAttribute(attr) ?? d).trim().split(/\s+/).map(Number);
-const color = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-let root, target, diag, sweeping = false, guessed = false, round;
+let obj = null, marks = [], swing = null, spin = false;
 
 function resize() {
-  const { width, height } = stageEl.getBoundingClientRect();
-  renderer.setSize(width, height, false);
-  renderer.setPixelRatio(devicePixelRatio);
-  camera.aspect = width / height;
+  renderer.setSize(innerWidth, innerHeight, false);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
 }
-new ResizeObserver(resize).observe(stageEl);
+addEventListener("resize", resize);
+resize();
+
+const zips = {};
+const fetchZip = id => (zips[id] ??= fetch(`/f/${id}/model.zip`).then(r => r.arrayBuffer()));
 
 // URDF tree: a child link's frame sits at its joint origin; its mesh is expressed in that frame.
-async function loadMechanism(zipUrl) {
-  const files = unzipSync(new Uint8Array(await (await fetch(zipUrl)).arrayBuffer()));
+async function loadObject(round) {
+  const files = unzipSync(new Uint8Array(await fetchZip(round.id)));
   const urdfPath = Object.keys(files).find(f => f.endsWith(".urdf"));
   const dir = urdfPath.slice(0, urdfPath.lastIndexOf("/") + 1);
   const urdf = new DOMParser().parseFromString(new TextDecoder().decode(files[urdfPath]), "text/xml");
   const links = {}, children = new Set(), joints = [];
   for (const l of urdf.querySelectorAll("link")) {
-    const g = new THREE.Group();
-    const mesh = l.querySelector("mesh");
+    const g = new THREE.Group(), mesh = l.querySelector("mesh");
     if (mesh) g.add((await loader.parseAsync(files[dir + mesh.getAttribute("filename")].slice().buffer, "")).scene);
     links[l.getAttribute("name")] = g;
   }
   for (const j of urdf.querySelectorAll("joint")) {
-    const o = j.querySelector("origin"), lim = j.querySelector("limit");
-    const frame = new THREE.Group(), move = new THREE.Group(), part = j.querySelector("child").getAttribute("link");
+    const o = j.querySelector("origin"), lim = j.querySelector("limit"), part = j.querySelector("child").getAttribute("link");
+    const frame = new THREE.Group(), move = new THREE.Group();
     frame.position.set(...nums(o, "xyz"));
     frame.rotation.set(...nums(o, "rpy"));
     move.add(links[part]);
     frame.add(move);
     links[j.querySelector("parent").getAttribute("link")].add(frame);
     children.add(part);
-    joints.push({ type: j.getAttribute("type"), part, frame, move, axis: new THREE.Vector3(...nums(j.querySelector("axis"), "xyz", "1 0 0")).normalize(),
-      lower: +(lim?.getAttribute("lower") ?? 0), upper: +(lim?.getAttribute("upper") ?? 0) });
+    if (j.getAttribute("type") !== "revolute" && j.getAttribute("type") !== "continuous") continue;
+    const lower = +(lim?.getAttribute("lower") ?? -Math.PI), upper = +(lim?.getAttribute("upper") ?? Math.PI);
+    const closed = Math.min(Math.max(0, lower), upper);
+    let dir1 = Math.abs(upper - closed) >= Math.abs(lower - closed) ? 1 : -1;
+    if (round.flip) dir1 = -dir1;
+    const reach = Math.min(MAX_SWING, Math.max(Math.abs(upper - closed), Math.abs(lower - closed)));
+    joints.push({ part, frame, move, closed, swing: dir1 * reach, range: upper - lower,
+      axis: new THREE.Vector3(...nums(j.querySelector("axis"), "xyz", "1 0 0")).normalize() });
   }
   const group = new THREE.Group();
   for (const [n, g] of Object.entries(links)) if (!children.has(n)) group.add(g);
-  // The round asks about the hinge that swings furthest.
-  const revolute = joints.filter(j => j.type === "revolute" || j.type === "continuous");
-  const joint = revolute.sort((a, b) => (b.upper - b.lower) - (a.upper - a.lower))[0];
-  return { group, joints: revolute, joint };
+  const joint = [...joints].sort((a, b) => b.range - a.range)[0]; // ask about the hinge that swings furthest
+  return { group, joints, joint };
 }
 
-function setJoints(s) {
-  for (const j of root.joints) {
-    const closed = Math.min(Math.max(0, j.lower), j.upper);
-    const open = Math.abs(j.upper - closed) > Math.abs(j.lower - closed) ? j.upper : j.lower;
-    j.move.quaternion.setFromAxisAngle(j.axis, closed + s * (open - closed));
-  }
+function setPose(s) { for (const j of obj.joints) j.move.quaternion.setFromAxisAngle(j.axis, j.closed + s * j.swing); }
+
+function place(o) {
+  if (obj) scene.remove(obj.group);
+  for (const m of marks) scene.remove(m);
+  marks = [];
+  obj = o;
+  scene.add(o.group);
+  setPose(0);
+  const box = new THREE.Box3().setFromObject(o.group);
+  o.diag = box.getSize(new THREE.Vector3()).length();
+  controls.target.copy(box.getCenter(new THREE.Vector3()));
+  // Object sits in the lower right of the poster; the type owns the top left.
+  camera.position.copy(controls.target).add(new THREE.Vector3(0.75, 0.55, 1).normalize().multiplyScalar(o.diag * 1.9));
+  camera.setViewOffset(innerWidth, innerHeight, -innerWidth * (innerWidth > innerHeight ? 0.12 : 0), -innerHeight * 0.1, innerWidth, innerHeight);
 }
 
-function dot(p, cssVar, size = 1) {
-  const m = new THREE.Mesh(new THREE.SphereGeometry(diag * 0.012 * size), new THREE.MeshBasicMaterial({ color: color(cssVar), depthTest: false }));
-  m.renderOrder = 1;
-  m.position.fromArray(p);
+function mark(p, color, size) {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(obj.diag * 0.014 * size), new THREE.MeshBasicMaterial({ color, depthTest: false }));
+  m.renderOrder = 2;
+  m.position.copy(p);
   scene.add(m);
+  marks.push(m);
 }
-
-async function show(r) {
-  round = r;
-  $("ask").textContent = "Loading the object…";
-  if (root) scene.remove(root.group);
-  root = await loadMechanism(`/f/${r.id}/model.zip`);
-  if (!root.joint) { $("ask").textContent = "Lux3D found no hinge in this object."; return; }
-  scene.add(root.group);
-  setJoints(0);
-  const box = new THREE.Box3().setFromObject(root.group), size = box.getSize(new THREE.Vector3());
-  diag = size.length();
-  target = box.getCenter(new THREE.Vector3());
-  controls.target.copy(target);
-  camera.position.copy(target).add(new THREE.Vector3(0.7, 0.6, 1).multiplyScalar(diag * 1.1));
-  const part = root.joint.part.replace(/_/g, " ");
-  if (r.status === "review") {
-    $("ask").textContent = `Lux3D found the ${part}. Watch it move.`;
-    sweeping = true;
-    $("review").hidden = false;
-  } else {
-    $("ask").textContent = `Where does the ${part} pivot? Click it.`;
-    $("msg").textContent = "Drag to turn the object.";
-  }
+function line(a, b) {
+  const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([a, b]), new THREE.LineBasicMaterial({ color: css("--snow"), depthTest: false }));
+  l.renderOrder = 2;
+  scene.add(l);
+  marks.push(l);
 }
-
-// Score: 100 at the real pivot, 0 at 30% of the object's size away or further.
-function scoreOf(p, pivot) { return Math.max(0, Math.round(100 * (1 - p.distanceTo(pivot) / (0.3 * diag)))); }
-
-let down;
-renderer.domElement.addEventListener("pointerdown", e => (down = [e.clientX, e.clientY]));
-renderer.domElement.addEventListener("pointerup", async e => {
-  if (!root || guessed || round.status !== "live" || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;
-  const rect = renderer.domElement.getBoundingClientRect();
-  const ray = new THREE.Raycaster();
-  ray.setFromCamera(new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1), camera);
-  const hit = ray.intersectObject(root.group, true)[0];
-  if (!hit) return;
-  guessed = true;
-  const pivot = root.joint.frame.getWorldPosition(new THREE.Vector3());
-  const score = scoreOf(hit.point, pivot);
-  const res = await fetch(`/api/rounds/${round.id}/guesses`, { method: "POST", body: JSON.stringify({ p: hit.point.toArray(), score }) });
-  const all = res.ok ? await res.json() : [];
-  for (const g of all.slice(0, -1)) dot(g.p, "--crowd", 0.7);
-  dot(hit.point.toArray(), "--you");
-  dot(pivot.toArray(), "--true", 1.2);
-  sweeping = true;
-  const others = all.slice(0, -1);
-  const beat = others.filter(g => g.score < score).length;
-  $("score").textContent = `${score} / 100` + (others.length ? ` · closer than ${beat} of ${others.length} players` : "");
-  $("result").hidden = $("share").hidden = $("next").hidden = false;
-  $("ask").textContent = score > 70 ? "Right on the hinge." : score > 30 ? "Close." : "It pivots somewhere else.";
-  $("msg").textContent = "";
-});
-
-$("share").onclick = async () => {
-  await navigator.clipboard.writeText(`${location.origin}/?r=${round.id}`);
-  $("share").textContent = "Link copied";
-};
-$("next").onclick = async () => {
-  const live = await (await fetch("/api/rounds")).json();
-  const next = live[(live.indexOf(round.id) + 1) % live.length];
-  location.search = `?r=${next}`;
-};
-$("yes").onclick = $("no").onclick = async e => {
-  const ok = e.target.id === "yes";
-  const res = await fetch(`/api/rounds/${round.id}/confirm`, { method: "POST", body: JSON.stringify({ s: params.get("s"), ok }) });
-  if (!res.ok) return ($("msg").textContent = "That didn't save. Try again.");
-  location.search = ok ? `?r=${round.id}` : "";
-};
-$("photo").onchange = async e => {
-  const f = e.target.files[0];
-  if (!f) return;
-  $("ask").textContent = "Uploading the photo…";
-  // Shrink to 1024 px JPEG: enough for Lux3D and well under Aholo's 5 MB single-upload limit.
-  const bmp = await createImageBitmap(f);
-  const k = Math.min(1, 1024 / Math.max(bmp.width, bmp.height));
-  const c = new OffscreenCanvas(Math.round(bmp.width * k), Math.round(bmp.height * k));
-  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
-  const jpeg = await c.convertToBlob({ type: "image/jpeg", quality: 0.9 });
-  const res = await fetch("/api/rounds", { method: "POST", headers: { "Content-Type": "image/jpeg" }, body: jpeg });
-  const body = await res.json();
-  if (!res.ok) return ($("ask").textContent = body.error);
-  location.search = `?r=${body.id}&s=${body.secret}`;
-};
-
-const STAGES = { mesh: "Lux3D is building the 3D model from your photo (about 1 minute).", mechanism: "Lux3D is finding what moves (about 3 minutes).", failed: "", discarded: "This round was discarded." };
-async function start() {
-  let id = params.get("r");
-  if (!id) id = (await (await fetch("/api/rounds")).json())[0];
-  if (!id) return ($("ask").textContent = "No rounds yet. Make the first one from a photo.");
-  const s = params.get("s");
-  for (;;) {
-    const res = await fetch(`/api/rounds/${id}` + (s ? `?s=${s}` : ""));
-    const r = await res.json();
-    if (!res.ok) return ($("ask").textContent = r.error);
-    if (r.status === "live" || r.status === "review") return show(r);
-    $("ask").textContent = r.status === "failed" ? r.error : STAGES[r.status];
-    if (r.status === "failed" || r.status === "discarded") return;
-    $("msg").textContent = "Keep this page open. You can also come back to this link later.";
-    await new Promise(ok => setTimeout(ok, 10000));
-  }
-}
-start();
+const partName = o => o.joint.part.replace(/_/g, " ").replace(/\d+/g, "").trim();
 
 renderer.setAnimationLoop(t => {
-  if (root?.joint && sweeping) setJoints((1 - Math.cos(t / 900)) / 2);
+  if (obj && swing !== null) setPose((1 - Math.cos((t - swing) / 650)) / 2);
+  if (obj && spin) obj.group.rotation.y = t / 6000;
   controls.update();
   renderer.render(scene, camera);
 });
+
+// ---------- the run ----------
+let run = [], at = 0, total = 0, results = [], tapHandler = null, started = 0, timerId;
+
+let down;
+renderer.domElement.addEventListener("pointerdown", e => (down = [e.clientX, e.clientY]));
+renderer.domElement.addEventListener("pointerup", e => {
+  if (!tapHandler || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
+  const ray = new THREE.Raycaster();
+  ray.setFromCamera(new THREE.Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
+  const hit = ray.intersectObject(obj.group, true)[0];
+  if (hit) tapHandler(hit.point);
+});
+
+async function startRun(ids) {
+  run = ids; at = 0; total = 0; results = [];
+  spin = false;
+  if (obj) obj.group.rotation.y = 0;
+  await playRound();
+}
+
+async function playRound() {
+  const id = run[at];
+  show("round");
+  $("ask").textContent = "loading…";
+  $("hint").textContent = "";
+  $("hud").textContent = `${at + 1} / ${run.length} · ${total} pts`;
+  $("timer").style.transform = "scaleX(1)";
+  const round = await api(`/api/rounds/${id}`);
+  place(await loadObject(round));
+  swing = null;
+  if (run[at + 1]) fetchZip(run[at + 1]); // preload the next object while this one is played
+  $("ask").textContent = `where does the ${partName(obj)} pivot?`;
+  $("hint").textContent = "Tap the spot. Drag to turn it.";
+  started = performance.now();
+  const tick = () => {
+    const left = 1 - (performance.now() - started) / 1000 / ROUND_SECONDS;
+    $("timer").style.transform = `scaleX(${Math.max(0, left)})`;
+    if (left <= 0) return answer(null, round);
+    timerId = requestAnimationFrame(tick);
+  };
+  timerId = requestAnimationFrame(tick);
+  tapHandler = p => answer(p, round);
+}
+
+// Closeness: 1 on the real pivot, 0 at 30% of the object's size away. Points: 80 for closeness + up to 20 for speed.
+async function answer(p, round) {
+  tapHandler = null;
+  cancelAnimationFrame(timerId);
+  const pivot = obj.joint.frame.getWorldPosition(new THREE.Vector3());
+  const secs = (performance.now() - started) / 1000;
+  const close = p ? Math.max(0, 1 - p.distanceTo(pivot) / (0.3 * obj.diag)) : 0;
+  const gain = Math.round(80 * close + 20 * close * Math.max(0, 1 - secs / ROUND_SECONDS));
+  total += gain;
+  results.push({ name: round.name || "your object", gain });
+  let others = [];
+  if (p) {
+    try { others = (await api(`/api/rounds/${round.id}/guesses`, { method: "POST", body: JSON.stringify({ p: p.toArray(), score: close * 100 }) })).slice(0, -1); } catch {}
+  } else others = round.guesses;
+  for (const g of others.slice(-60)) mark(new THREE.Vector3(...g.p), css("--navy"), 0.6);
+  if (p) { mark(p, css("--red"), 1); line(p, pivot); }
+  mark(pivot, css("--snow"), 1.3);
+  swing = performance.now();
+  show("reveal");
+  $("gain").textContent = `+${gain}`;
+  $("hud2").textContent = `${at + 1} / ${run.length} · ${total} pts`;
+  const beat = others.filter(g => g.score < close * 100).length;
+  $("verdict").textContent = !p ? "Too slow. The white dot is where it pivots."
+    : (close > 0.75 ? "On the hinge." : close > 0.3 ? "Close." : "It pivots at the white dot.")
+      + (others.length ? ` Closer than ${beat} of ${others.length} ${others.length === 1 ? "player" : "players"}.` : " You're the first to play this one.");
+  $("next").textContent = at + 1 < run.length ? "Next object" : "See your score";
+}
+
+$("next").onclick = () => (++at < run.length ? playRound() : finish());
+
+function finish() {
+  show("end");
+  swing = null;
+  if (obj) { scene.remove(obj.group); obj = null; }
+  for (const m of marks) scene.remove(m);
+  $("total").innerHTML = `${total}<span class="of"> / ${run.length * 100}</span>`;
+  $("rows").innerHTML = "";
+  for (const r of results) { const row = $("rows").insertRow(); row.insertCell().textContent = r.name; row.insertCell().textContent = r.gain; }
+}
+
+$("share").onclick = async () => {
+  const link = `${location.origin}/?beat=${total}` + (params.get("r") ? `&r=${params.get("r")}` : "");
+  const text = `I scored ${total} on Hinge Hunt. Beat it: ${link}`;
+  if (navigator.share) { try { await navigator.share({ text }); return; } catch {} }
+  await navigator.clipboard.writeText(text);
+  $("share").textContent = "Copied. Send it";
+};
+
+// ---------- making a round from a photo ----------
+for (const input of document.querySelectorAll(".photo")) input.onchange = async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  show("make");
+  $("makeAsk").textContent = "uploading…";
+  $("makeHint").textContent = "";
+  try {
+    // Shrink to 1024 px JPEG: enough for Lux3D and well under Aholo's 5 MB upload limit.
+    const bmp = await createImageBitmap(f);
+    const k = Math.min(1, 1024 / Math.max(bmp.width, bmp.height));
+    const c = new OffscreenCanvas(Math.round(bmp.width * k), Math.round(bmp.height * k));
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    const jpeg = await c.convertToBlob({ type: "image/jpeg", quality: 0.9 });
+    const made = await api("/api/rounds", { method: "POST", headers: { "Content-Type": "image/jpeg" }, body: jpeg });
+    location.search = `?r=${made.id}&s=${made.secret}`;
+  } catch (err) {
+    $("makeAsk").textContent = "that didn't work";
+    $("makeHint").textContent = err.message;
+  }
+};
+
+const STAGES = { mesh: ["building the 3d model", "Lux3D is turning your photo into a 3D object. About a minute."], mechanism: ["finding what moves", "Lux3D is working out the parts and the hinge. About three minutes."] };
+async function owner(id, s) {
+  show("make");
+  const t0 = Date.now();
+  for (;;) {
+    let r;
+    try { r = await api(`/api/rounds/${id}?s=${s}`); } catch (err) { $("makeAsk").textContent = err.message; return; }
+    if (r.status === "review") return review(r, s);
+    if (r.status === "live") { location.search = `?r=${id}`; return; }
+    if (r.status === "failed" || r.status === "discarded") { $("makeAsk").textContent = r.status === "failed" ? "lux3d couldn't do this one" : "discarded"; $("makeHint").textContent = r.error || ""; return; }
+    $("makeAsk").textContent = STAGES[r.status][0];
+    $("makeHint").textContent = `${STAGES[r.status][1]} You can close this page and come back to this link. ${Math.round((Date.now() - t0) / 1000)} s`;
+    await new Promise(ok => setTimeout(ok, 8000));
+  }
+}
+
+async function review(r, s) {
+  place(await loadObject(r));
+  swing = 0;
+  $("makeAsk").textContent = `lux3d found the ${partName(obj)}. is this how it opens?`;
+  $("makeHint").textContent = "Players will tap where it pivots, so the motion has to look right.";
+  $("reviewRow").hidden = false;
+  let flipped = false;
+  $("flip").onclick = async () => { flipped = !flipped; place(await loadObject({ ...r, flip: flipped })); swing = 0; };
+  const decide = ok => async () => {
+    try { await api(`/api/rounds/${r.id}/confirm`, { method: "POST", body: JSON.stringify({ s, ok, flip: flipped }) }); } catch (err) { $("makeHint").textContent = err.message; return; }
+    $("reviewRow").hidden = true;
+    if (!ok) { $("makeAsk").textContent = "discarded"; $("makeHint").textContent = ""; return; }
+    history.replaceState(null, "", `?r=${r.id}`);
+    $("makeAsk").textContent = "it's live";
+    $("makeHint").textContent = "Send the link. Your friends get 15 seconds to find the pivot.";
+    $("madeRow").hidden = false;
+    $("playMine").onclick = () => startRun([r.id]);
+    $("copyMine").onclick = async () => { await navigator.clipboard.writeText(`${location.origin}/?r=${r.id}`); $("copyMine").textContent = "Copied"; };
+  };
+  $("yes").onclick = decide(true);
+  $("no").onclick = decide(false);
+}
+
+// ---------- title ----------
+async function title() {
+  show("title");
+  const r = params.get("r");
+  const { date, rounds } = r ? { date: null, rounds: [r] } : await api("/api/today");
+  const when = date && new Date(date + "T12:00:00Z").toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  $("today").textContent = r ? "1 object" : `${when} · ${rounds.length} objects`;
+  $("play").textContent = r ? "Play this object" : "Play today's objects";
+  if (params.get("beat")) { $("challenge").hidden = false; $("challenge").textContent = `A friend scored ${params.get("beat")}. Beat it.`; }
+  if (!rounds.length) { $("play").disabled = true; return; }
+  // The first object turns slowly behind the title, like the photo on a poster.
+  fetchZip(rounds[0]).then(async () => {
+    if (!$("title").hidden) { place(await loadObject(await api(`/api/rounds/${rounds[0]}`))); spin = true; }
+  });
+  $("play").onclick = () => startRun(rounds);
+}
+
+if (params.get("r") && params.get("s")) owner(params.get("r"), params.get("s"));
+else title();
 </script>
 </html>

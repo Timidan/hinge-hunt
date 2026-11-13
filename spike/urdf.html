@@ -9,11 +9,14 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment()).texture;
+scene.add(new THREE.AxesHelper(0.1));
 scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2.5));
 const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.001, 100);
 const controls = new OrbitControls(camera, renderer.domElement);

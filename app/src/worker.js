@@ -42,7 +42,7 @@ async function uploadPhoto(env, photo) {
 
 const getRound = (env, rid) => env.KV.get(`round:${rid}`, "json");
 const putRound = (env, r) => env.KV.put(`round:${r.id}`, JSON.stringify(r));
-const view = r => ({ id: r.id, status: r.status, error: r.error, created: r.created, ready: r.ready });
+const view = r => ({ id: r.id, name: r.name, status: r.status, error: r.error, created: r.created, ready: r.ready, flip: !!r.flip });
 
 async function create(req, env) {
   if (req.headers.get("content-type") !== "image/jpeg") return json({ error: "Send a JPEG photo." }, 415);
@@ -84,9 +84,10 @@ async function advance(env, r) {
 }
 
 async function confirm(req, env, r) {
-  const { s, ok } = await req.json();
+  const { s, ok, flip } = await req.json();
   if (s !== r.secret || r.status !== "review") return json({ error: "Not allowed." }, 403);
   r.status = ok ? "live" : "discarded";
+  r.flip = !!flip; // Lux3D's swing direction can be backwards; the uploader corrects it here.
   await putRound(env, r);
   if (ok) {
     const live = (await env.KV.get("list:live", "json")) || [];
@@ -106,6 +107,14 @@ async function guess(req, env, r) {
   return json(all);
 }
 
+// Today's run: up to 5 live rounds, the same for everyone on a UTC date.
+async function today(env) {
+  const live = (await env.KV.get("list:live", "json")) || [];
+  const date = new Date().toISOString().slice(0, 10);
+  const hash = str => [...str].reduce((h, ch) => (Math.imul(h, 31) + ch.charCodeAt(0)) | 0, 7);
+  return json({ date, rounds: live.map(id => [hash(date + id), id]).sort((a, b) => a[0] - b[0]).slice(0, 5).map(x => x[1]) });
+}
+
 async function file(env, rid, name) {
   const zip = name === "model.zip" && (await env.KV.get(`file:${rid}:zip`, "stream"));
   if (!zip) return new Response("Not found", { status: 404 });
@@ -119,6 +128,7 @@ export default {
     const url = new URL(req.url);
     const [, a, b, c, d] = url.pathname.split("/");
     if (a === "f" && b && c) return file(env, b, c);
+    if (a === "api" && b === "today") return today(env);
     if (a !== "api" || b !== "rounds") return env.ASSETS.fetch(req);
     if (!c) {
       if (req.method === "POST") return create(req, env);
