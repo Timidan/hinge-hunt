@@ -74,8 +74,7 @@ async function advance(env, r) {
   } else if (r.status === "mechanism") {
     const t = await task(env, r.artTask);
     if (t.status === 3) {
-      const zip = await fetch(t.url);
-      await env.KV.put(`file:${r.id}:zip`, zip.body);
+      await putZip(env, r.id, await (await fetch(t.url)).arrayBuffer());
       Object.assign(r, { status: "review", ready: Date.now() });
     } else if (t.status === 4 || t.status === 6) Object.assign(r, { status: "failed", error: "Lux3D could not find a moving part in this object." });
   } else return r;
@@ -115,10 +114,22 @@ async function today(env) {
   return json({ date, rounds: live.map(id => [hash(date + id), id]).sort((a, b) => a[0] - b[0]).slice(0, 5).map(x => x[1]) });
 }
 
+// KV values cap at 25 MB and some results are bigger, so ZIPs are stored as 20 MB chunks: file:<id>:zip:<n>.
+const CHUNK = 20e6;
+async function putZip(env, rid, buf) {
+  const n = Math.ceil(buf.byteLength / CHUNK);
+  for (let i = 0; i < n; i++) await env.KV.put(`file:${rid}:zip:${i}`, buf.slice(i * CHUNK, (i + 1) * CHUNK));
+  await env.KV.put(`file:${rid}:zipn`, String(n));
+}
+
 async function file(env, rid, name) {
-  const zip = name === "model.zip" && (await env.KV.get(`file:${rid}:zip`, "stream"));
-  if (!zip) return new Response("Not found", { status: 404 });
-  return new Response(zip, {
+  const n = name === "model.zip" && +(await env.KV.get(`file:${rid}:zipn`));
+  if (!n) return new Response("Not found", { status: 404 });
+  const { readable, writable } = new TransformStream();
+  (async () => {
+    for (let i = 0; i < n; i++) await (await env.KV.get(`file:${rid}:zip:${i}`, "stream")).pipeTo(writable, { preventClose: i < n - 1 });
+  })();
+  return new Response(readable, {
     headers: { "Content-Type": "application/zip", "Cache-Control": "public, max-age=86400" },
   });
 }
