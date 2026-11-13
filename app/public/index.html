@@ -6,91 +6,177 @@
 <meta name="description" content="Five objects a day. Tap where each one pivots, then watch the real mechanism, found by Lux3D from a single photo, open.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Barlow:wght@500;600&display=swap" rel="stylesheet">
 <style>
-  /* Swiss poster: one cobalt field, giant tight lowercase grotesk, square cream labels, one red accent. */
-  :root { color-scheme: light; --field: #2e63b8; --snow: #f4f6f8; --red: #d6203f; --label: #fbf3e6; --navy: #1e2e5e; }
+  /* Dead centre: a pocket detector for suspicious objects. Lacquer housing, bone inspection window,
+     mint only for revealed mechanism, vermilion for the player's tap and the score slab. */
+  :root { color-scheme: dark; --lacquer: #17191c; --bone: #f2f0e7; --red: #ff4e42; --mint: #4de5d1; --silver: #b8c0c8; --ghost: #0d1b1d; }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
-  body { background: var(--field); color: var(--snow); font: 500 16px/1.3 "Inter Tight", system-ui, sans-serif; overflow: hidden; }
-  canvas { position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; }
-  .screen { position: fixed; inset: 0; pointer-events: none; padding: 20px 20px 24px; display: flex; flex-direction: column; }
+  body { background: var(--lacquer); color: var(--bone); font: 500 16px/1.35 Barlow, system-ui, sans-serif; overflow: hidden; }
+  .chakra { font-family: "Chakra Petch", system-ui, sans-serif; font-weight: 700; }
+  .device { position: fixed; inset: 0; display: grid; grid-template-rows: auto 1fr; gap: 10px; padding: 10px; }
+
+  /* housing */
+  .hud { display: flex; align-items: center; gap: 18px; min-height: 64px; padding: 0 10px 0 18px; border-radius: 14px;
+    background: linear-gradient(#262a30, #17191c 70%); box-shadow: inset 0 1px 0 #ffffff24, inset 0 -1px 0 #000, 0 1px 0 #ffffff0d; }
+  .hud .name { font-size: 18px; }
+  .hud .score { font-size: 26px; font-variant-numeric: tabular-nums; color: var(--bone); }
+  .hud .spacer { flex: 1; }
+  .hud small { color: var(--silver); font-size: 15px; }
+  #dial { width: 52px; height: 52px; flex: none; }
+  #dial circle { fill: none; stroke-width: 5; }
+  #dial .track { stroke: #2c3036; }
+  #dial #arc { stroke: var(--bone); stroke-linecap: round; transform: rotate(-90deg); transform-origin: 30px 30px; }
+  #dial text { fill: var(--bone); font: 700 22px "Chakra Petch"; text-anchor: middle; }
+  #dial.late #arc { stroke: var(--red); }
+  #dial.late text { fill: var(--red); }
+
+  /* inspection window */
+  .window { position: relative; overflow: hidden; border-radius: 18px; background: var(--bone); color: var(--lacquer);
+    box-shadow: 0 0 0 3px #0b0c0e, 0 1px 0 4px #ffffff12; transition: background .25s; }
+  .window.ghost { background: var(--ghost); color: var(--bone); }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
+  .screen { position: absolute; inset: 0; pointer-events: none; padding: 22px; display: flex; flex-direction: column; gap: 14px; }
   .screen > * { pointer-events: auto; }
-  .big { font-weight: 900; letter-spacing: -0.05em; line-height: 0.8; margin: 0; text-wrap: balance; }
-  h1.big { font-size: clamp(88px, 22vw, 300px); }
-  .prompt { font-size: clamp(40px, 7.5vw, 112px); max-width: 14ch; }
-  .points { font-size: clamp(96px, 20vw, 280px); }
-  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
-  .spacer { flex: 1; pointer-events: none; }
-  .label { background: var(--label); color: var(--navy); border: 1px solid var(--navy); padding: 14px 18px; font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; }
-  button.label, label.label { font: inherit; font-weight: 700; cursor: pointer; }
-  button.go { background: var(--red); color: var(--snow); border-color: var(--red); }
-  button:focus-visible, label.label:focus-within { outline: 3px solid var(--snow); outline-offset: 2px; }
-  .lines { color: var(--snow); font-weight: 700; font-size: clamp(18px, 2.2vw, 24px); margin: 16px 0 0; max-width: 34ch; }
-  .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-  #timer { position: fixed; left: 0; bottom: 0; height: 6px; background: var(--snow); width: 100%; transform-origin: left; }
-  table { border-collapse: collapse; }
-  td { padding: 4px 28px 4px 0; font-weight: 700; font-size: clamp(22px, 3vw, 34px); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-  .of { font-size: 0.3em; letter-spacing: -0.02em; }
-  td + td { text-align: right; }
+  .screen .spacer { flex: 1; pointer-events: none; }
+  .ask { margin: 0; font-size: clamp(28px, 4.6vw, 60px); line-height: 1; letter-spacing: -0.01em; max-width: 16ch; text-wrap: balance; }
+  .hint { margin: 0; font-size: 18px; color: #4a4d52; max-width: 60ch; }
+  #end { overflow-y: auto; } /* five rows can outgrow a short phone */
+  .ghost .hint { color: var(--silver); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+  /* buttons: physical keys that depress */
+  .btn { font: 700 17px "Chakra Petch", system-ui; padding: 14px 22px; border: 0; border-radius: 12px; cursor: pointer; color: var(--bone);
+    background: linear-gradient(#2c3036, #17191c); box-shadow: inset 0 1px 0 #ffffff2e, 0 4px 0 #000; transition: transform .06s, box-shadow .06s; }
+  .btn:active { transform: translateY(3px); box-shadow: inset 0 1px 0 #ffffff2e, 0 1px 0 #000; }
+  .btn.go { color: var(--lacquer); background: linear-gradient(#ff7067, #f0402f); box-shadow: inset 0 1px 0 #ffffff66, 0 4px 0 #9a2219; }
+  .btn.go:active { box-shadow: inset 0 1px 0 #ffffff66, 0 1px 0 #9a2219; }
+  .btn.light { color: var(--lacquer); background: linear-gradient(#ffffff, #dedbd0); box-shadow: inset 0 1px 0 #fff, 0 4px 0 #8d8a80; }
+  .btn.quiet { padding: 10px 14px; font-size: 15px; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn:focus-visible { outline: 3px solid var(--mint); outline-offset: 3px; }
+
+  /* title: two enamel plates joined by a hinge pin */
+  .plates { display: flex; align-items: stretch; perspective: 900px; align-self: flex-start; }
+  .plate { font-size: clamp(44px, 9vw, 120px); line-height: 1; padding: .12em .3em .16em; color: var(--bone);
+    background: linear-gradient(#2c3036, #17191c 75%); box-shadow: inset 0 2px 0 #ffffff2e, inset 0 -3px 0 #000, 0 10px 24px #0000004d;
+    transition: transform .45s cubic-bezier(.5, 0, .7, .2), opacity .45s; }
+  .plate.l { border-radius: 14px 4px 4px 14px; transform-origin: right center; }
+  .plate.r { border-radius: 4px 14px 14px 4px; transform-origin: left center; color: var(--red); }
+  .pin { width: 14px; border-radius: 7px; margin: -6px -3px; position: relative; z-index: 1;
+    background: linear-gradient(90deg, #6d747b, #e9eef2 40%, #8a939b 70%, #4c5258); box-shadow: 0 0 0 2px #0b0c0e; }
+  .plates.open .l { transform: rotateY(-95deg); opacity: 0; }
+  .plates.open .r { transform: rotateY(95deg); opacity: 0; }
+  .lede { margin: 0; font-size: clamp(18px, 2vw, 22px); font-weight: 600; }
+  .challenge { margin: 0; align-self: flex-start; background: var(--lacquer); color: var(--bone); padding: 8px 14px; border-radius: 8px; font-weight: 600; }
+
+  /* reveal: the angled score slab clips onto the frame */
+  .slab { position: absolute; left: -14px; bottom: 96px; transform: rotate(-5deg); transform-origin: left bottom; pointer-events: none; }
+  .slab b { display: block; width: max-content; font-size: clamp(76px, 13vw, 168px); line-height: .9; padding: 8px 48px 14px 34px; color: var(--lacquer);
+    background: var(--red); clip-path: polygon(0 0, 100% 7%, 95% 100%, 0 93%); font-variant-numeric: tabular-nums; }
+  .slab span { display: block; width: max-content; max-width: min(78vw, 560px); margin: -4px 0 0 30px; padding: 9px 16px; background: var(--bone); color: var(--lacquer);
+    font: 600 18px/1.3 Barlow; transform: rotate(3deg); }
+  .slab.in { animation: slam .34s cubic-bezier(.2, 1.5, .4, 1) both; }
+  .slab.perfect b { background: linear-gradient(105deg, var(--red) 42%, #ffd2cc 50%, var(--red) 58%) 100% 0 / 320% 100%; animation: sheen .9s .3s both; }
+  @keyframes slam { from { transform: translateX(-105%) rotate(-14deg); } to { transform: rotate(-5deg); } }
+  @keyframes sheen { to { background-position: 0 0; } }
+  .reveal-bar { justify-content: flex-end; }
+
+  /* end: case closed */
+  .case { align-self: center; margin: auto 0; width: min(100%, 560px); padding: 26px; border-radius: 18px; color: var(--bone);
+    background: linear-gradient(#262a30, #111316); box-shadow: inset 0 1px 0 #ffffff26, 0 18px 40px #0000004d; display: flex; flex-direction: column; gap: 16px; }
+  .case h2 { margin: 0; font-size: 20px; color: var(--silver); }
+  .total { font-size: clamp(72px, 12vw, 120px); line-height: .85; font-variant-numeric: tabular-nums; }
+  .total small { font-size: .3em; color: var(--silver); }
+  .rows { display: grid; gap: 6px; }
+  .rows div { display: grid; grid-template-columns: 64px 1fr auto; gap: 14px; align-items: center; padding: 6px; border-radius: 10px; background: #ffffff0a; }
+  .rows img { width: 64px; height: 48px; object-fit: cover; border-radius: 6px; background: var(--ghost); display: block; }
+  .rows span::first-letter { text-transform: uppercase; }
+  .rows b { font: 700 24px "Chakra Petch"; font-variant-numeric: tabular-nums; padding-right: 8px; }
+  .rows b.hit { color: var(--mint); }
+
+  /* make: stages listed with their state as a word */
+  .stages { display: grid; gap: 6px; max-width: 440px; margin: 0; padding: 0; list-style: none; }
+  .stages li { display: flex; justify-content: space-between; padding: 10px 14px; border-radius: 10px; background: #17191c14; font-weight: 600; }
+  .stages li.now { background: var(--lacquer); color: var(--bone); }
+  .stages li em { font-style: normal; color: #6b6e73; }
+  .stages li.now em { color: var(--mint); }
+
   [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; } }
+  @media (max-width: 600px) {
+    .device { padding: 6px; gap: 6px; }
+    .hud { gap: 10px; padding: 0 6px 0 12px; min-height: 58px; }
+    .hud .name { display: none; }
+    .screen { padding: 16px; }
+    .slab { bottom: 84px; }
+  }
 </style>
 
-<section class="screen" id="title">
-  <h1 class="big">hinge<br>hunt</h1>
-  <p class="lines" id="challenge" hidden></p>
-  <div class="spacer"></div>
-  <div class="row">
-    <button class="label go" id="play">Play today's objects</button>
-    <span class="label" id="today"></span>
-    <label class="label">Add your own object<input class="photo" type="file" accept="image/*" hidden></label>
-  </div>
-</section>
+<main class="device">
+  <header class="hud">
+    <span class="name chakra">Hinge Hunt</span>
+    <small id="hudObj"></small>
+    <span class="score chakra" id="hudScore"></span>
+    <span class="spacer"></span>
+    <button class="btn quiet" id="snd">Sound on</button>
+    <svg id="dial" viewBox="0 0 60 60" hidden><circle class="track" cx="30" cy="30" r="26"/><circle id="arc" cx="30" cy="30" r="26" stroke-dasharray="163.4"/><text id="secs" x="30" y="38">15</text></svg>
+  </header>
 
-<section class="screen" id="round" hidden>
-  <div class="top">
-    <h2 class="big prompt" id="ask"></h2>
-    <span class="label" id="hud"></span>
-  </div>
-  <div class="spacer"></div>
-  <p class="lines" id="hint"></p>
-  <div id="timer"></div>
-</section>
+  <div class="window" id="win">
+    <section class="screen" id="title">
+      <div class="plates chakra" id="plates"><span class="plate l">Hinge</span><i class="pin"></i><span class="plate r">Hunt</span></div>
+      <p class="lede" id="lede">Five objects. Find what makes them move.</p>
+      <p class="challenge" id="challenge" hidden></p>
+      <div class="spacer"></div>
+      <div class="row">
+        <button class="btn go" id="play">Start today's hunt</button>
+        <label class="btn"><input class="photo" type="file" accept="image/*" hidden>Add your own object</label>
+      </div>
+    </section>
 
-<section class="screen" id="reveal" hidden>
-  <div class="top">
-    <p class="big points" id="gain"></p>
-    <span class="label" id="hud2"></span>
-  </div>
-  <p class="lines" id="verdict"></p>
-  <div class="spacer"></div>
-  <div class="row"><button class="label go" id="next">Next object</button></div>
-</section>
+    <section class="screen" id="round" hidden>
+      <h2 class="ask chakra" id="ask"></h2>
+      <div class="spacer"></div>
+      <p class="hint" id="hint"></p>
+    </section>
 
-<section class="screen" id="end" hidden>
-  <p class="big points" id="total"></p>
-  <table class="lines" id="rows"></table>
-  <div class="spacer"></div>
-  <div class="row">
-    <button class="label go" id="share">Challenge a friend</button>
-    <label class="label">Add your own object<input class="photo" type="file" accept="image/*" hidden></label>
-  </div>
-</section>
+    <section class="screen" id="reveal" hidden>
+      <div class="slab" id="slab"><b class="chakra" id="gain"></b><span id="verdict"></span></div>
+      <div class="spacer"></div>
+      <div class="row reveal-bar"><button class="btn light" id="next" hidden>Next object</button></div>
+    </section>
 
-<section class="screen" id="make" hidden>
-  <h2 class="big prompt" id="makeAsk"></h2>
-  <p class="lines" id="makeHint"></p>
-  <div class="spacer"></div>
-  <div class="row" id="reviewRow" hidden>
-    <button class="label go" id="yes">Yes, publish it</button>
-    <button class="label" id="flip">Flip the direction</button>
-    <button class="label" id="no">Discard</button>
+    <section class="screen" id="end" hidden>
+      <div class="case">
+        <h2 class="chakra">Case closed</h2>
+        <div class="total chakra" id="total"></div>
+        <div class="rows" id="rows"></div>
+        <div class="row">
+          <button class="btn go" id="share">Beat my score</button>
+          <label class="btn"><input class="photo" type="file" accept="image/*" hidden>Add your own object</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="make" hidden>
+      <h2 class="ask chakra" id="makeAsk"></h2>
+      <ol class="stages" id="stages"></ol>
+      <p class="hint" id="makeHint"></p>
+      <div class="spacer"></div>
+      <div class="row" id="reviewRow" hidden>
+        <button class="btn go" id="yes">Yes, publish it</button>
+        <button class="btn" id="flip">Flip the direction</button>
+        <button class="btn" id="no">Discard</button>
+      </div>
+      <div class="row" id="madeRow" hidden>
+        <button class="btn go" id="playMine">Play it</button>
+        <button class="btn" id="copyMine">Copy the link</button>
+      </div>
+    </section>
   </div>
-  <div class="row" id="madeRow" hidden>
-    <button class="label go" id="playMine">Play it</button>
-    <button class="label" id="copyMine">Copy the link</button>
-  </div>
-</section>
+</main>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","fflate":"https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js"}}</script>
 <script type="module">
@@ -105,12 +191,62 @@ const MAX_SWING = 1.3; // rad. Lux3D's limits are generic (often 2 rad); real hi
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-const show = id => { for (const s of document.querySelectorAll(".screen")) s.hidden = s.id !== id; };
+const wait = ms => new Promise(ok => setTimeout(ok, ms));
 const api = async (path, opts) => { const r = await fetch(path, opts); const b = await r.json(); if (!r.ok) throw new Error(b.error); return b; };
+const win = $("win");
+function show(id) {
+  for (const s of document.querySelectorAll(".screen")) s.hidden = s.id !== id;
+  $("dial").toggleAttribute("hidden", id !== "round" && id !== "reveal"); // SVG has no .hidden property
+}
+function hud(obj, score) { $("hudObj").textContent = obj; $("hudScore").textContent = score; }
+
+// ---------- sound: synthesized, no files ----------
+let ac, muted = false;
+try { muted = localStorage.getItem("hh-muted") === "1"; } catch {}
+$("snd").textContent = muted ? "Sound off" : "Sound on";
+$("snd").onclick = () => {
+  muted = !muted;
+  $("snd").textContent = muted ? "Sound off" : "Sound on";
+  try { localStorage.setItem("hh-muted", muted ? "1" : "0"); } catch {}
+};
+function voice(make, dur, vol, at = 0) {
+  if (muted) return;
+  ac ??= new AudioContext();
+  const t = ac.currentTime + at, g = ac.createGain();
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  g.connect(ac.destination);
+  const src = make(t);
+  src.connect(g);
+  src.start(t);
+  src.stop(t + dur);
+}
+const tone = (f0, f1, dur, type, vol, at) => voice(t => {
+  const o = ac.createOscillator();
+  o.type = type;
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  return o;
+}, dur, vol, at);
+const noise = (dur, vol, at) => voice(() => {
+  const b = ac.createBuffer(1, ac.sampleRate * dur, ac.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  const s = ac.createBufferSource();
+  s.buffer = b;
+  return s;
+}, dur, vol, at);
+const sfx = {
+  click: () => noise(0.025, 0.35),
+  tick: () => tone(1500, 1500, 0.04, "square", 0.04),
+  chirp: () => tone(700, 2600, 0.14, "square", 0.04),
+  snap: () => { noise(0.04, 0.5); tone(180, 55, 0.14, "sine", 0.35); },
+  // Two notes; the interval resolves further the closer the tap was.
+  reward: c => { tone(523, 523, 0.16, "triangle", 0.18); tone(c > 0.75 ? 1047 : c > 0.3 ? 784 : 494, c > 0.75 ? 1047 : c > 0.3 ? 784 : 466, 0.34, "triangle", 0.18, 0.13); },
+};
 
 // ---------- 3D ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-document.body.prepend(renderer.domElement);
+win.prepend(renderer.domElement);
 const scene = new THREE.Scene();
 scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment()).texture;
 const camera = new THREE.PerspectiveCamera(35, 1, 0.001, 100);
@@ -118,19 +254,34 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enablePan = false;
 const loader = new GLTFLoader();
 const nums = (el, attr, d = "0 0 0") => (el?.getAttribute(attr) ?? d).trim().split(/\s+/).map(Number);
-let obj = null, marks = [], swing = null, spin = false;
+let obj = null, marks = [], swing = null, spin = false, grow = null;
 
+// The object sits a little below centre, under the question.
+function frame() {
+  const w = win.clientWidth, h = win.clientHeight;
+  camera.setViewOffset(w, h, 0, -h * 0.05, w, h);
+}
 function resize() {
-  renderer.setSize(innerWidth, innerHeight, false);
+  const w = win.clientWidth, h = win.clientHeight;
+  if (!w || !h) return;
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  camera.aspect = innerWidth / innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  frame();
   camera.updateProjectionMatrix();
 }
-addEventListener("resize", resize);
+new ResizeObserver(resize).observe(win);
 resize();
 
 const zips = {};
-const fetchZip = id => (zips[id] ??= fetch(`/f/${id}/model.zip`).then(r => r.arrayBuffer()));
+const fetchZip = id => (zips[id] ??= fetch(`/f/${id}/model.zip`).then(r => r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.status))));
+// Model downloads sometimes arrive cut short; a cut ZIP fails to unzip, so drop it and fetch again.
+async function loadFresh(round) {
+  for (let i = 0; ; i++) {
+    try { return await loadObject(round); }
+    catch (err) { delete zips[round.id]; if (i === 2) throw err; }
+  }
+}
 
 // URDF tree: a child link's frame sits at its joint origin; its mesh is expressed in that frame.
 async function loadObject(round) {
@@ -170,33 +321,33 @@ async function loadObject(round) {
 
 function setPose(s) { for (const j of obj.joints) j.move.quaternion.setFromAxisAngle(j.axis, j.closed + s * j.swing); }
 
+function clearMarks() { for (const m of marks) scene.remove(m); marks = []; grow = null; }
 function place(o) {
   if (obj) scene.remove(obj.group);
-  for (const m of marks) scene.remove(m);
-  marks = [];
+  clearMarks();
   obj = o;
   scene.add(o.group);
-  setPose(0);
+  setPose(1); // frame the open pose too, so the swing stays in the window
   const box = new THREE.Box3().setFromObject(o.group);
-  o.diag = box.getSize(new THREE.Vector3()).length();
+  setPose(0);
+  const closed = new THREE.Box3().setFromObject(o.group);
+  o.diag = closed.getSize(new THREE.Vector3()).length(); // scoring scale: the closed object
+  box.union(closed);
   controls.target.copy(box.getCenter(new THREE.Vector3()));
-  // Object sits in the lower right of the poster; the type owns the top left.
-  camera.position.copy(controls.target).add(new THREE.Vector3(0.75, 0.55, 1).normalize().multiplyScalar(o.diag * 1.9));
-  camera.setViewOffset(innerWidth, innerHeight, -innerWidth * (innerWidth > innerHeight ? 0.12 : 0), -innerHeight * 0.1, innerWidth, innerHeight);
+  const fit = box.getSize(new THREE.Vector3()).length() * 1.6 / Math.min(1, camera.aspect) ** 0.8; // narrow windows need the camera further back
+  camera.position.copy(controls.target).add(new THREE.Vector3(0.75, 0.55, 1).normalize().multiplyScalar(fit));
+  frame();
+  camera.updateProjectionMatrix();
 }
 
+function overlay(m) { m.renderOrder = 2; scene.add(m); marks.push(m); return m; }
 function mark(p, color, size) {
   const m = new THREE.Mesh(new THREE.SphereGeometry(obj.diag * 0.014 * size), new THREE.MeshBasicMaterial({ color, depthTest: false }));
-  m.renderOrder = 2;
   m.position.copy(p);
-  scene.add(m);
-  marks.push(m);
+  return overlay(m);
 }
 function line(a, b) {
-  const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([a, b]), new THREE.LineBasicMaterial({ color: css("--snow"), depthTest: false }));
-  l.renderOrder = 2;
-  scene.add(l);
-  marks.push(l);
+  return overlay(new THREE.Line(new THREE.BufferGeometry().setFromPoints([a, b]), new THREE.LineBasicMaterial({ color: css("--bone"), depthTest: false })));
 }
 // The hinge is a line, not a point: the joint axis, clipped to the moving part's extent along it.
 function hingeSegment() {
@@ -217,22 +368,32 @@ function nearestOn([a, b], p) {
   return a.clone().addScaledVector(ab, t);
 }
 function rod(a, b) {
-  const len = a.distanceTo(b);
-  const m = new THREE.Mesh(new THREE.CylinderGeometry(obj.diag * 0.007, obj.diag * 0.007, len, 12), new THREE.MeshBasicMaterial({ color: css("--snow"), depthTest: false }));
-  m.renderOrder = 2;
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(obj.diag * 0.008, obj.diag * 0.008, a.distanceTo(b), 12), new THREE.MeshBasicMaterial({ color: css("--mint"), depthTest: false }));
   m.position.copy(a).add(b).multiplyScalar(0.5);
   m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
-  scene.add(m);
-  marks.push(m);
+  return overlay(m);
 }
 const partName = o => o.joint.part.replace(/_/g, " ").replace(/\d+/g, "").trim();
 
 renderer.setAnimationLoop(t => {
   if (obj && swing !== null) setPose((1 - Math.cos((t - swing) / 650)) / 2);
   if (obj && spin) obj.group.rotation.y = t / 6000;
+  if (grow) grow.mesh.scale.y = Math.max(0.001, Math.min(1, (t - grow.t0) / 250)); // the hinge line draws in
   controls.update();
   renderer.render(scene, camera);
 });
+
+// A small picture of the reveal for the case-closed rows.
+function snapshot() {
+  renderer.render(scene, camera);
+  const c = document.createElement("canvas"), s = renderer.domElement;
+  c.width = 128; c.height = 96;
+  const g = c.getContext("2d"), k = Math.max(c.width / s.width, c.height / s.height);
+  g.fillStyle = css("--ghost");
+  g.fillRect(0, 0, c.width, c.height);
+  g.drawImage(s, (c.width - s.width * k) / 2, (c.height - s.height * k) / 2, s.width * k, s.height * k);
+  return c.toDataURL("image/jpeg", 0.8);
+}
 
 // ---------- the run ----------
 let run = [], at = 0, total = 0, results = [], tapHandler = null, started = 0, timerId;
@@ -240,9 +401,10 @@ let run = [], at = 0, total = 0, results = [], tapHandler = null, started = 0, t
 let down;
 renderer.domElement.addEventListener("pointerdown", e => (down = [e.clientX, e.clientY]));
 renderer.domElement.addEventListener("pointerup", e => {
-  if (!tapHandler || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
+  if (!tapHandler || !down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
+  const r = renderer.domElement.getBoundingClientRect();
   const ray = new THREE.Raycaster();
-  ray.setFromCamera(new THREE.Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
+  ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
   const hit = ray.intersectObject(obj.group, true)[0];
   if (hit) tapHandler(hit.point);
 });
@@ -256,21 +418,37 @@ async function startRun(ids) {
 
 async function playRound() {
   const id = run[at];
+  win.classList.remove("ghost");
   show("round");
-  $("ask").textContent = "loading…";
+  $("ask").textContent = "Loading the object…";
   $("hint").textContent = "";
-  $("hud").textContent = `${at + 1} / ${run.length} · ${total} pts`;
-  $("timer").style.transform = "scaleX(1)";
+  hud(`Object ${at + 1} of ${run.length}`, total);
+  $("dial").classList.remove("late");
+  $("arc").style.strokeDashoffset = 0;
+  $("secs").textContent = ROUND_SECONDS;
   const round = await api(`/api/rounds/${id}`);
-  place(await loadObject(round));
+  try { place(await loadFresh(round)); }
+  catch {
+    $("ask").textContent = "This object didn't load. Skipping it.";
+    results.push({ name: round.name || "your object", gain: 0 });
+    await wait(1800);
+    return ++at < run.length ? playRound() : finish();
+  }
   swing = null;
   if (run[at + 1]) fetchZip(run[at + 1]); // preload the next object while this one is played
-  $("ask").textContent = `where does the ${partName(obj)} pivot?`;
+  $("ask").textContent = `Where does the ${partName(obj)} pivot?`;
   $("hint").textContent = "Tap the spot. Drag to turn it.";
   started = performance.now();
+  let shown = ROUND_SECONDS;
   const tick = () => {
     const left = 1 - (performance.now() - started) / 1000 / ROUND_SECONDS;
-    $("timer").style.transform = `scaleX(${Math.max(0, left)})`;
+    $("arc").style.strokeDashoffset = 163.4 * (1 - Math.max(0, left));
+    const secs = Math.max(0, Math.ceil(left * ROUND_SECONDS));
+    if (secs !== shown) {
+      shown = secs;
+      $("secs").textContent = secs;
+      if (secs <= 3 && secs > 0) { $("dial").classList.add("late"); sfx.tick(); }
+    }
     if (left <= 0) return answer(null, round);
     timerId = requestAnimationFrame(tick);
   };
@@ -279,9 +457,11 @@ async function playRound() {
 }
 
 // Closeness: 1 on the real pivot, 0 at 30% of the object's size away. Points: 80 for closeness + up to 20 for speed.
+// The reveal runs as one sequence: tap locks, window flips to ghost view, hinge draws, part opens, score slams in.
 async function answer(p, round) {
   tapHandler = null;
   cancelAnimationFrame(timerId);
+  sfx.click();
   const hinge = hingeSegment();
   const pivot = p ? nearestOn(hinge, p) : hinge[0];
   const secs = (performance.now() - started) / 1000;
@@ -289,37 +469,76 @@ async function answer(p, round) {
   const gain = Math.round(80 * close + 20 * close * Math.max(0, 1 - secs / ROUND_SECONDS));
   total += gain;
   results.push({ name: round.name || "your object", gain });
-  let others = [];
-  if (p) {
-    try { others = (await api(`/api/rounds/${round.id}/guesses`, { method: "POST", body: JSON.stringify({ p: p.toArray(), score: close * 100 }) })).slice(0, -1); } catch {}
-  } else others = round.guesses;
-  for (const g of others.slice(-60)) mark(new THREE.Vector3(...g.p), css("--navy"), 0.6);
-  rod(...hinge);
-  if (p) { mark(p, css("--red"), 1); line(p, pivot); }
-  swing = performance.now();
+  const crowd = p
+    ? api(`/api/rounds/${round.id}/guesses`, { method: "POST", body: JSON.stringify({ p: p.toArray(), score: close * 100 }) }).then(g => g.slice(0, -1), () => [])
+    : Promise.resolve(round.guesses || []);
+  if (p) mark(p, css("--red"), 1);
   show("reveal");
-  $("gain").textContent = `+${gain}`;
-  $("hud2").textContent = `${at + 1} / ${run.length} · ${total} pts`;
+  $("slab").className = "slab";
+  $("slab").hidden = true;
+  $("next").hidden = true;
+
+  await wait(150);
+  win.classList.add("ghost");
+  grow = { mesh: rod(...hinge), t0: performance.now() };
+  sfx.chirp();
+
+  await wait(250);
+  if (p) line(p, pivot);
+  swing = performance.now();
+  sfx.snap();
+
+  const others = await crowd;
+  await wait(650);
+  for (const g of others.slice(-60)) mark(new THREE.Vector3(...g.p), css("--silver"), 0.5);
   const beat = others.filter(g => g.score < close * 100).length;
-  $("verdict").textContent = !p ? "Too slow. It pivots on the white line."
-    : (close > 0.75 ? "On the hinge." : close > 0.3 ? "Close." : "It pivots on the white line.")
+  $("verdict").textContent = !p ? "Too slow. It pivots on the green line."
+    : (close > 0.75 ? "On the hinge." : close > 0.3 ? "Close." : "It pivots on the green line.")
       + (others.length ? ` ${beat} of ${others.length} ${others.length === 1 ? "player was" : "players were"} further off.` : " You're the first to play this one.");
+  $("slab").hidden = false;
+  $("slab").className = "slab in" + (gain >= 90 ? " perfect" : "");
+  sfx.reward(close);
+  const t0 = performance.now();
+  const count = () => {
+    const k = Math.min(1, (performance.now() - t0) / 450);
+    $("gain").textContent = `+${Math.round(gain * k)}`;
+    if (k < 1) requestAnimationFrame(count);
+    else hud(`Object ${at + 1} of ${run.length}`, total);
+  };
+  count();
   $("next").textContent = at + 1 < run.length ? "Next object" : "See your score";
+  $("next").hidden = false;
 }
 
-$("next").onclick = () => (++at < run.length ? playRound() : finish());
+$("next").onclick = () => {
+  sfx.click();
+  results[at].thumb = snapshot();
+  ++at < run.length ? playRound() : finish();
+};
 
 function finish() {
   show("end");
+  win.classList.remove("ghost");
+  hud("", "");
   swing = null;
   if (obj) { scene.remove(obj.group); obj = null; }
-  for (const m of marks) scene.remove(m);
-  $("total").innerHTML = `${total}<span class="of"> / ${run.length * 100}</span>`;
+  clearMarks();
+  $("total").innerHTML = `${total}<small> / ${run.length * 100}</small>`;
   $("rows").innerHTML = "";
-  for (const r of results) { const row = $("rows").insertRow(); row.insertCell().textContent = r.name; row.insertCell().textContent = r.gain; }
+  for (const r of results) {
+    const row = document.createElement("div"), img = document.createElement("img"), name = document.createElement("span"), pts = document.createElement("b");
+    img.src = r.thumb || "";
+    img.alt = "";
+    name.textContent = r.name;
+    pts.textContent = r.gain;
+    pts.className = r.gain >= 75 ? "hit" : "";
+    row.append(img, name, pts);
+    $("rows").append(row);
+  }
 }
 
 $("share").onclick = async () => {
+  sfx.click();
   const link = `${location.origin}/?beat=${total}` + (params.get("r") ? `&r=${params.get("r")}` : "");
   const text = `I scored ${total} on Hinge Hunt. Beat it: ${link}`;
   if (navigator.share) { try { await navigator.share({ text }); return; } catch {} }
@@ -328,12 +547,27 @@ $("share").onclick = async () => {
 };
 
 // ---------- making a round from a photo ----------
+const STAGE_NAMES = ["Upload the photo", "Build the 3D model", "Find what moves", "Check the motion"];
+function stages(now, failed) {
+  $("stages").innerHTML = "";
+  STAGE_NAMES.forEach((n, i) => {
+    const li = document.createElement("li"), em = document.createElement("em");
+    li.textContent = n;
+    em.textContent = i < now ? "done" : i === now ? (failed ? "failed" : "working") : "next";
+    if (i === now) li.className = "now";
+    li.append(em);
+    $("stages").append(li);
+  });
+}
+
 for (const input of document.querySelectorAll(".photo")) input.onchange = async e => {
   const f = e.target.files[0];
   if (!f) return;
   show("make");
-  $("makeAsk").textContent = "uploading…";
+  hud("Your object", "");
+  $("makeAsk").textContent = "Uploading your photo";
   $("makeHint").textContent = "";
+  stages(0);
   try {
     // Shrink to 1024 px JPEG: enough for Lux3D and well under Aholo's 5 MB upload limit.
     const bmp = await createImageBitmap(f);
@@ -344,31 +578,42 @@ for (const input of document.querySelectorAll(".photo")) input.onchange = async 
     const made = await api("/api/rounds", { method: "POST", headers: { "Content-Type": "image/jpeg" }, body: jpeg });
     location.search = `?r=${made.id}&s=${made.secret}`;
   } catch (err) {
-    $("makeAsk").textContent = "that didn't work";
+    $("makeAsk").textContent = "That didn't work";
     $("makeHint").textContent = err.message;
+    stages(0, true);
   }
 };
 
-const STAGES = { mesh: ["building the 3d model", "Lux3D is turning your photo into a 3D object. About a minute."], mechanism: ["finding what moves", "Lux3D is working out the parts and the hinge. About three minutes."] };
+const STAGES = { mesh: [1, "Building the 3D model", "Lux3D is turning your photo into a 3D object. About a minute."],
+  mechanism: [2, "Finding what moves", "Lux3D is working out the parts and the hinge. About three minutes."] };
 async function owner(id, s) {
   show("make");
+  hud("Your object", "");
   const t0 = Date.now();
   for (;;) {
     let r;
     try { r = await api(`/api/rounds/${id}?s=${s}`); } catch (err) { $("makeAsk").textContent = err.message; return; }
     if (r.status === "review") return review(r, s);
     if (r.status === "live") { location.search = `?r=${id}`; return; }
-    if (r.status === "failed" || r.status === "discarded") { $("makeAsk").textContent = r.status === "failed" ? "lux3d couldn't do this one" : "discarded"; $("makeHint").textContent = r.error || ""; return; }
-    $("makeAsk").textContent = STAGES[r.status][0];
-    $("makeHint").textContent = `${STAGES[r.status][1]} You can close this page and come back to this link. ${Math.round((Date.now() - t0) / 1000)} s`;
-    await new Promise(ok => setTimeout(ok, 8000));
+    if (r.status === "failed" || r.status === "discarded") {
+      $("makeAsk").textContent = r.status === "failed" ? "Lux3D couldn't do this one" : "Discarded";
+      $("makeHint").textContent = r.error || "";
+      $("stages").innerHTML = "";
+      return;
+    }
+    const [n, head, hint] = STAGES[r.status];
+    stages(n);
+    $("makeAsk").textContent = head;
+    $("makeHint").textContent = `${hint} You can close this page and come back to this link. ${Math.round((Date.now() - t0) / 1000)} s`;
+    await wait(8000);
   }
 }
 
 async function review(r, s) {
   place(await loadObject(r));
   swing = 0;
-  $("makeAsk").textContent = `lux3d found the ${partName(obj)}. is this how it opens?`;
+  $("stages").innerHTML = "";
+  $("makeAsk").textContent = `Lux3D found the ${partName(obj)}. Is this how it opens?`;
   $("makeHint").textContent = "Players will tap where it pivots, so the motion has to look right.";
   $("reviewRow").hidden = false;
   let flipped = false;
@@ -376,9 +621,9 @@ async function review(r, s) {
   const decide = ok => async () => {
     try { await api(`/api/rounds/${r.id}/confirm`, { method: "POST", body: JSON.stringify({ s, ok, flip: flipped }) }); } catch (err) { $("makeHint").textContent = err.message; return; }
     $("reviewRow").hidden = true;
-    if (!ok) { $("makeAsk").textContent = "discarded"; $("makeHint").textContent = ""; return; }
+    if (!ok) { $("makeAsk").textContent = "Discarded"; $("makeHint").textContent = ""; return; }
     history.replaceState(null, "", `?r=${r.id}`);
-    $("makeAsk").textContent = "it's live";
+    $("makeAsk").textContent = "It's live";
     $("makeHint").textContent = "Send the link. Your friends get 15 seconds to find the pivot.";
     $("madeRow").hidden = false;
     $("playMine").onclick = () => startRun([r.id]);
@@ -394,15 +639,18 @@ async function title() {
   const r = params.get("r");
   const { date, rounds } = r ? { date: null, rounds: [r] } : await api("/api/today");
   const when = date && new Date(date + "T12:00:00Z").toLocaleDateString(undefined, { day: "numeric", month: "short" });
-  $("today").textContent = r ? "1 object" : `${when} · ${rounds.length} objects`;
-  $("play").textContent = r ? "Play this object" : "Play today's objects";
+  hud(r ? "1 object" : `${when} · ${rounds.length} objects`, "");
+  const count = ["One", "Two", "Three", "Four", "Five"][rounds.length - 1] ?? rounds.length;
+  $("lede").textContent = rounds.length === 1 ? "One object. Find what makes it move." : `${count} objects. Find what makes them move.`;
+  $("play").textContent = r ? "Start this hunt" : "Start today's hunt";
   if (params.get("beat")) { $("challenge").hidden = false; $("challenge").textContent = `A friend scored ${params.get("beat")}. Beat it.`; }
   if (!rounds.length) { $("play").disabled = true; return; }
-  // The first object turns slowly behind the title, like the photo on a poster.
+  // The first object turns slowly in the window behind the title plates.
   fetchZip(rounds[0]).then(async () => {
     if (!$("title").hidden) { place(await loadObject(await api(`/api/rounds/${rounds[0]}`))); spin = true; }
-  });
-  $("play").onclick = () => startRun(rounds);
+  }).catch(() => delete zips[rounds[0]]); // the round retries it
+  // The plates swing open on their hinge, then the hunt starts.
+  $("play").onclick = () => { sfx.click(); $("plates").classList.add("open"); setTimeout(() => startRun(rounds), 450); };
 }
 
 if (params.get("r") && params.get("s")) owner(params.get("r"), params.get("s"));
