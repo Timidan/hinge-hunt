@@ -1,0 +1,84 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>URDF joint check</title>
+<style>body{margin:0;background:#151515;color:#eee;font:14px system-ui}#ui{position:fixed;left:12px;top:12px;white-space:pre}</style>
+<div id="ui"><select id="pick"><option>laugh</option><option>yawn</option><option>clipper-art</option><option>press-art</option><option>toaster-art</option></select>
+<span id="info"></span></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2.5));
+const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.001, 100);
+const controls = new OrbitControls(camera, renderer.domElement);
+const loader = new GLTFLoader();
+const nums = (el, attr, d = "0 0 0") => (el?.getAttribute(attr) ?? d).trim().split(/\s+/).map(Number);
+let root, joints = [];
+
+// URDF tree: each child link's frame sits at its joint origin; its mesh is expressed in that frame.
+async function load(name) {
+  if (root) scene.remove(root);
+  const dir = `out/${name}/urdf/`;
+  const urdf = new DOMParser().parseFromString(await (await fetch(dir + "robot.urdf")).text(), "text/xml");
+  const links = {};
+  for (const l of urdf.querySelectorAll("link")) {
+    const g = new THREE.Group();
+    const mesh = l.querySelector("mesh");
+    if (mesh) g.add((await loader.loadAsync(dir + mesh.getAttribute("filename"))).scene);
+    links[l.getAttribute("name")] = g;
+  }
+  const children = new Set();
+  joints = [];
+  const lines = [];
+  for (const j of urdf.querySelectorAll("joint")) {
+    const o = j.querySelector("origin"), lim = j.querySelector("limit");
+    const frame = new THREE.Group();
+    frame.position.set(...nums(o, "xyz"));
+    frame.rotation.set(...nums(o, "rpy"));
+    const move = new THREE.Group();
+    const child = j.querySelector("child").getAttribute("link");
+    move.add(links[child]);
+    frame.add(move, new THREE.Mesh(new THREE.SphereGeometry(0.004), new THREE.MeshBasicMaterial({ color: 0x00ff88 })));
+    links[j.querySelector("parent").getAttribute("link")].add(frame);
+    children.add(child);
+    const jt = { type: j.getAttribute("type"), move, axis: new THREE.Vector3(...nums(j.querySelector("axis"), "xyz", "1 0 0")).normalize(),
+      lower: +(lim?.getAttribute("lower") ?? 0), upper: +(lim?.getAttribute("upper") ?? 0) };
+    joints.push(jt);
+    lines.push(`${j.getAttribute("name")} ${jt.type} at ${nums(o, "xyz").map(v => v.toFixed(3))} axis ${nums(j.querySelector("axis"), "xyz")} range ${jt.lower}..${jt.upper}`);
+  }
+  root = new THREE.Group();
+  for (const [n, g] of Object.entries(links)) if (!children.has(n)) root.add(g);
+  scene.add(root);
+  const box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3());
+  controls.target.copy(box.getCenter(new THREE.Vector3()));
+  camera.position.copy(controls.target).add(new THREE.Vector3(1.2, 1, 1.6).multiplyScalar(size.length()));
+  document.getElementById("info").textContent = `\n${lines.join("\n")}\nbox ${size.toArray().map(v => v.toFixed(3)).join(" x ")} m`;
+}
+const pick = document.getElementById("pick");
+pick.onchange = e => load(e.target.value);
+pick.value = new URLSearchParams(location.search).get("n") ?? "laugh";
+await load(pick.value);
+
+addEventListener("resize", () => {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+});
+renderer.setAnimationLoop(t => {
+  if (!renderer.domElement.width) dispatchEvent(new Event("resize"));
+  const s = (Math.sin(t / 700) + 1) / 2;
+  for (const j of joints) {
+    const v = j.lower + s * (j.upper - j.lower);
+    if (j.type === "prismatic") j.move.position.copy(j.axis).multiplyScalar(v);
+    else j.move.quaternion.setFromAxisAngle(j.axis, v);
+  }
+  controls.update();
+  renderer.render(scene, camera);
+});
+</script>

@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hinge Hunt</title>
+<meta name="description" content="Guess where an object pivots. The real mechanism, found by Lux3D from one photo, opens to show who was right.">
+<style>
+  :root { color-scheme: light dark; --bg: #f3f1ec; --ink: #161616; --muted: #5d5a55; --line: #c9c4ba; --you: #d2451e; --true: #1f8a4c; --crowd: #6b6b6b; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #151515; --ink: #ecebe7; --muted: #a29e97; --line: #3a3835; --crowd: #8d8d8d; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.4 system-ui, sans-serif; height: 100dvh; display: grid; grid-template-rows: auto 1fr auto; }
+  header, footer { padding: 14px 16px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  #ask { font-size: 22px; margin: 0; flex: 1 1 100%; font-weight: 500; }
+  #stage { position: relative; min-height: 0; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  #msg { position: absolute; inset: auto 16px 16px; color: var(--muted); }
+  #score { font-size: 22px; font-variant-numeric: tabular-nums; }
+  button, label.btn { font: inherit; background: none; color: var(--ink); border: 1px solid var(--line); padding: 8px 14px; border-radius: 6px; cursor: pointer; }
+  button.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  button:focus-visible, label.btn:focus-within { outline: 2px solid var(--you); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  .key span { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 10px; vertical-align: baseline; }
+  footer { color: var(--muted); font-size: 14px; justify-content: space-between; }
+</style>
+<header>
+  <h1>Hinge Hunt</h1>
+  <p id="ask">Loading a round…</p>
+</header>
+<div id="stage"><p id="msg"></p></div>
+<footer>
+  <div id="result" hidden>
+    <span id="score"></span>
+    <span class="key"><span style="background:var(--you)"></span>you<span style="background:var(--true)"></span>real pivot<span style="background:var(--crowd)"></span>others</span>
+  </div>
+  <div id="review" hidden>
+    <span>Is this how it opens?</span>
+    <button class="primary" id="yes">Yes, publish</button>
+    <button id="no">No, discard</button>
+  </div>
+  <div>
+    <button id="next" hidden>Next round</button>
+    <button id="share" hidden>Copy link</button>
+    <label class="btn">Make a round from a photo<input id="photo" type="file" accept="image/jpeg,image/png" hidden></label>
+  </div>
+</footer>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","fflate":"https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js"}}</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { unzipSync } from "fflate";
+
+const $ = id => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+const stageEl = $("stage");
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+stageEl.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment()).texture;
+const camera = new THREE.PerspectiveCamera(40, 1, 0.001, 100);
+const controls = new OrbitControls(camera, renderer.domElement);
+const loader = new GLTFLoader();
+const nums = (el, attr, d = "0 0 0") => (el?.getAttribute(attr) ?? d).trim().split(/\s+/).map(Number);
+const color = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+let root, target, diag, sweeping = false, guessed = false, round;
+
+function resize() {
+  const { width, height } = stageEl.getBoundingClientRect();
+  renderer.setSize(width, height, false);
+  renderer.setPixelRatio(devicePixelRatio);
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stageEl);
+
+// URDF tree: a child link's frame sits at its joint origin; its mesh is expressed in that frame.
+async function loadMechanism(zipUrl) {
+  const files = unzipSync(new Uint8Array(await (await fetch(zipUrl)).arrayBuffer()));
+  const urdfPath = Object.keys(files).find(f => f.endsWith(".urdf"));
+  const dir = urdfPath.slice(0, urdfPath.lastIndexOf("/") + 1);
+  const urdf = new DOMParser().parseFromString(new TextDecoder().decode(files[urdfPath]), "text/xml");
+  const links = {}, children = new Set(), joints = [];
+  for (const l of urdf.querySelectorAll("link")) {
+    const g = new THREE.Group();
+    const mesh = l.querySelector("mesh");
+    if (mesh) g.add((await loader.parseAsync(files[dir + mesh.getAttribute("filename")].slice().buffer, "")).scene);
+    links[l.getAttribute("name")] = g;
+  }
+  for (const j of urdf.querySelectorAll("joint")) {
+    const o = j.querySelector("origin"), lim = j.querySelector("limit");
+    const frame = new THREE.Group(), move = new THREE.Group(), part = j.querySelector("child").getAttribute("link");
+    frame.position.set(...nums(o, "xyz"));
+    frame.rotation.set(...nums(o, "rpy"));
+    move.add(links[part]);
+    frame.add(move);
+    links[j.querySelector("parent").getAttribute("link")].add(frame);
+    children.add(part);
+    joints.push({ type: j.getAttribute("type"), part, frame, move, axis: new THREE.Vector3(...nums(j.querySelector("axis"), "xyz", "1 0 0")).normalize(),
+      lower: +(lim?.getAttribute("lower") ?? 0), upper: +(lim?.getAttribute("upper") ?? 0) });
+  }
+  const group = new THREE.Group();
+  for (const [n, g] of Object.entries(links)) if (!children.has(n)) group.add(g);
+  // The round asks about the hinge that swings furthest.
+  const revolute = joints.filter(j => j.type === "revolute" || j.type === "continuous");
+  const joint = revolute.sort((a, b) => (b.upper - b.lower) - (a.upper - a.lower))[0];
+  return { group, joints: revolute, joint };
+}
+
+function setJoints(s) {
+  for (const j of root.joints) {
+    const closed = Math.min(Math.max(0, j.lower), j.upper);
+    const open = Math.abs(j.upper - closed) > Math.abs(j.lower - closed) ? j.upper : j.lower;
+    j.move.quaternion.setFromAxisAngle(j.axis, closed + s * (open - closed));
+  }
+}
+
+function dot(p, cssVar, size = 1) {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(diag * 0.012 * size), new THREE.MeshBasicMaterial({ color: color(cssVar), depthTest: false }));
+  m.renderOrder = 1;
+  m.position.fromArray(p);
+  scene.add(m);
+}
+
+async function show(r) {
+  round = r;
+  $("ask").textContent = "Loading the object…";
+  if (root) scene.remove(root.group);
+  root = await loadMechanism(`/f/${r.id}/model.zip`);
+  if (!root.joint) { $("ask").textContent = "Lux3D found no hinge in this object."; return; }
+  scene.add(root.group);
+  setJoints(0);
+  const box = new THREE.Box3().setFromObject(root.group), size = box.getSize(new THREE.Vector3());
+  diag = size.length();
+  target = box.getCenter(new THREE.Vector3());
+  controls.target.copy(target);
+  camera.position.copy(target).add(new THREE.Vector3(0.7, 0.6, 1).multiplyScalar(diag * 1.1));
+  const part = root.joint.part.replace(/_/g, " ");
+  if (r.status === "review") {
+    $("ask").textContent = `Lux3D found the ${part}. Watch it move.`;
+    sweeping = true;
+    $("review").hidden = false;
+  } else {
+    $("ask").textContent = `Where does the ${part} pivot? Click it.`;
+    $("msg").textContent = "Drag to turn the object.";
+  }
+}
+
+// Score: 100 at the real pivot, 0 at 30% of the object's size away or further.
+function scoreOf(p, pivot) { return Math.max(0, Math.round(100 * (1 - p.distanceTo(pivot) / (0.3 * diag)))); }
+
+let down;
+renderer.domElement.addEventListener("pointerdown", e => (down = [e.clientX, e.clientY]));
+renderer.domElement.addEventListener("pointerup", async e => {
+  if (!root || guessed || round.status !== "live" || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;
+  const rect = renderer.domElement.getBoundingClientRect();
+  const ray = new THREE.Raycaster();
+  ray.setFromCamera(new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1), camera);
+  const hit = ray.intersectObject(root.group, true)[0];
+  if (!hit) return;
+  guessed = true;
+  const pivot = root.joint.frame.getWorldPosition(new THREE.Vector3());
+  const score = scoreOf(hit.point, pivot);
+  const res = await fetch(`/api/rounds/${round.id}/guesses`, { method: "POST", body: JSON.stringify({ p: hit.point.toArray(), score }) });
+  const all = res.ok ? await res.json() : [];
+  for (const g of all.slice(0, -1)) dot(g.p, "--crowd", 0.7);
+  dot(hit.point.toArray(), "--you");
+  dot(pivot.toArray(), "--true", 1.2);
+  sweeping = true;
+  const others = all.slice(0, -1);
+  const beat = others.filter(g => g.score < score).length;
+  $("score").textContent = `${score} / 100` + (others.length ? ` · closer than ${beat} of ${others.length} players` : "");
+  $("result").hidden = $("share").hidden = $("next").hidden = false;
+  $("ask").textContent = score > 70 ? "Right on the hinge." : score > 30 ? "Close." : "It pivots somewhere else.";
+  $("msg").textContent = "";
+});
+
+$("share").onclick = async () => {
+  await navigator.clipboard.writeText(`${location.origin}/?r=${round.id}`);
+  $("share").textContent = "Link copied";
+};
+$("next").onclick = async () => {
+  const live = await (await fetch("/api/rounds")).json();
+  const next = live[(live.indexOf(round.id) + 1) % live.length];
+  location.search = `?r=${next}`;
+};
+$("yes").onclick = $("no").onclick = async e => {
+  const ok = e.target.id === "yes";
+  const res = await fetch(`/api/rounds/${round.id}/confirm`, { method: "POST", body: JSON.stringify({ s: params.get("s"), ok }) });
+  if (!res.ok) return ($("msg").textContent = "That didn't save. Try again.");
+  location.search = ok ? `?r=${round.id}` : "";
+};
+$("photo").onchange = async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  $("ask").textContent = "Uploading the photo…";
+  const res = await fetch("/api/rounds", { method: "POST", headers: { "Content-Type": f.type }, body: f });
+  const body = await res.json();
+  if (!res.ok) return ($("ask").textContent = body.error);
+  location.search = `?r=${body.id}&s=${body.secret}`;
+};
+
+const STAGES = { mesh: "Lux3D is building the 3D model from your photo (about 1 minute).", mechanism: "Lux3D is finding what moves (about 3 minutes).", failed: "", discarded: "This round was discarded." };
+async function start() {
+  let id = params.get("r");
+  if (!id) id = (await (await fetch("/api/rounds")).json())[0];
+  if (!id) return ($("ask").textContent = "No rounds yet. Make the first one from a photo.");
+  const s = params.get("s");
+  for (;;) {
+    const res = await fetch(`/api/rounds/${id}` + (s ? `?s=${s}` : ""));
+    const r = await res.json();
+    if (!res.ok) return ($("ask").textContent = r.error);
+    if (r.status === "live" || r.status === "review") return show(r);
+    $("ask").textContent = r.status === "failed" ? r.error : STAGES[r.status];
+    if (r.status === "failed" || r.status === "discarded") return;
+    $("msg").textContent = "Keep this page open. You can also come back to this link later.";
+    await new Promise(ok => setTimeout(ok, 10000));
+  }
+}
+start();
+
+renderer.setAnimationLoop(t => {
+  if (root?.joint && sweeping) setJoints((1 - Math.cos(t / 900)) / 2);
+  controls.update();
+  renderer.render(scene, camera);
+});
+</script>
+</html>
