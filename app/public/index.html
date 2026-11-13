@@ -33,11 +33,58 @@
   #dial.late text { fill: var(--red); }
 
   /* inspection window */
-  .window { position: relative; overflow: hidden; border-radius: 18px; background: var(--bone); color: var(--lacquer);
-    box-shadow: 0 0 0 3px #0b0c0e, 0 1px 0 4px #ffffff12; transition: background .25s; }
-  .window.ghost { background: var(--ghost); color: var(--bone); }
-  canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
-  .screen { position: absolute; inset: 0; pointer-events: none; padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+  .window { position: relative; overflow: hidden; border-radius: 18px; color: var(--lacquer); transition: color .25s;
+    background: radial-gradient(120% 95% at 50% 62%, #fdfcf7 0%, #ece9df 55%, #d3cfc2 100%);
+    box-shadow: 0 0 0 3px #0b0c0e, 0 1px 0 4px #ffffff12; }
+  /* ghost view: a dark layer fades in under the canvas; scanlines fade in over it */
+  .window::before, .window::after { content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity .25s; pointer-events: none; }
+  .window::before { z-index: 0; background: radial-gradient(120% 95% at 50% 62%, #1a3634 0%, #0d1b1d 60%, #060b0c 100%); }
+  .window::after { z-index: 3; background: repeating-linear-gradient(#ffffff08 0 1px, transparent 1px 3px); }
+  .window.ghost { color: var(--bone); }
+  .window.ghost::before, .window.ghost::after { opacity: 1; }
+  .window.shake { animation: shake .28s cubic-bezier(.3, .7, .4, 1); }
+  @keyframes shake { 20% { transform: translate(-7px, 4px); } 45% { transform: translate(5px, -3px); } 70% { transform: translate(-2px, 1px); } }
+  canvas { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; touch-action: none; display: block; }
+  .aiming canvas { cursor: none; }
+
+  /* viewfinder corners */
+  .finder { position: absolute; inset: 14px; z-index: 2; pointer-events: none; }
+  .finder i { position: absolute; width: 28px; height: 28px; border: 0 solid #17191c4d; transition: border-color .25s; }
+  .finder i:nth-child(1) { left: 0; top: 0; border-width: 3px 0 0 3px; }
+  .finder i:nth-child(2) { right: 0; top: 0; border-width: 3px 3px 0 0; }
+  .finder i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 3px 3px; }
+  .finder i:nth-child(4) { right: 0; bottom: 0; border-width: 0 3px 3px 0; }
+  .ghost .finder i { border-color: #4de5d199; }
+
+  /* reticle: follows the pointer, red over the object, contracts when it locks */
+  #reticle { position: absolute; left: 0; top: 0; z-index: 4; width: 56px; height: 56px; margin: -28px 0 0 -28px; pointer-events: none; color: var(--lacquer); }
+  #reticle svg { width: 100%; height: 100%; overflow: visible; transition: transform .12s, color .12s; }
+  #reticle.on { color: var(--red); }
+  #reticle.on svg { transform: rotate(45deg) scale(.86); }
+  #reticle.lock { color: var(--red); }
+  #reticle.lock svg { transform: rotate(45deg) scale(.5); }
+
+  /* round intro: a case-file band sweeps across */
+  #intro { position: absolute; left: -6%; right: -6%; top: 36%; z-index: 5; padding: 18px 9% 22px; transform: translateX(110%) rotate(-4deg);
+    background: var(--lacquer); color: var(--bone); border-left: 18px solid var(--red); box-shadow: 0 14px 30px #00000040; pointer-events: none; }
+  #intro small { display: block; font: 700 18px "Chakra Petch"; color: var(--silver); }
+  #intro b { display: inline-block; font-size: clamp(44px, 8vw, 104px); line-height: 1; }
+  #intro b::first-letter { text-transform: uppercase; }
+  #intro.go { animation: band 1.05s cubic-bezier(.3, .8, .3, 1) both; }
+  @keyframes band { 0% { transform: translateX(110%) rotate(-4deg); } 24%, 76% { transform: translateX(0) rotate(-4deg); } 100% { transform: translateX(-115%) rotate(-4deg); } }
+
+  /* question: the part name in a red block */
+  .ask mark { display: inline-block; background: var(--red); color: var(--lacquer); padding: 0 .16em .04em; margin: .04em 0; transform: rotate(-2deg); }
+
+  /* result pips */
+  .pips { display: flex; gap: 5px; }
+  .pips i { width: 26px; height: 12px; border-radius: 3px; background: #2c3036; box-shadow: inset 0 1px 0 #ffffff14; }
+  .pips i.now { background: var(--bone); }
+  .pips i.hit { background: var(--mint); }
+  .pips i.near { background: var(--silver); }
+  .pips i.miss { background: var(--red); }
+
+  .screen { position: absolute; inset: 0; z-index: 2; pointer-events: none; padding: 22px; display: flex; flex-direction: column; gap: 14px; }
   .screen > * { pointer-events: auto; }
   .screen .spacer { flex: 1; pointer-events: none; }
   .ask { margin: 0; font-size: clamp(28px, 4.6vw, 60px); line-height: 1; letter-spacing: -0.01em; max-width: 16ch; text-wrap: balance; }
@@ -95,6 +142,14 @@
   .rows span::first-letter { text-transform: uppercase; }
   .rows b { font: 700 24px "Chakra Petch"; font-variant-numeric: tabular-nums; padding-right: 8px; }
   .rows b.hit { color: var(--mint); }
+  .rows div { animation: rise .3s cubic-bezier(.2, 1.2, .4, 1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+  .case { position: relative; }
+  .stamp { position: absolute; top: 18px; right: 22px; display: grid; place-items: center; width: 108px; height: 108px; border: 5px solid var(--red); border-radius: 14px;
+    color: var(--red); transform: rotate(10deg); animation: stamp .32s cubic-bezier(.3, 1.6, .5, 1) both; }
+  .stamp b { font-size: 64px; line-height: .8; }
+  .stamp small { font: 700 13px "Chakra Petch"; margin-top: -14px; }
+  @keyframes stamp { from { opacity: 0; transform: rotate(-8deg) scale(2.4); } }
 
   /* make: stages listed with their state as a word */
   .stages { display: grid; gap: 6px; max-width: 440px; margin: 0; padding: 0; list-style: none; }
@@ -118,6 +173,7 @@
   <header class="hud">
     <span class="name chakra">Hinge Hunt</span>
     <small id="hudObj"></small>
+    <span class="pips" id="pips"></span>
     <span class="score chakra" id="hudScore"></span>
     <span class="spacer"></span>
     <button class="btn quiet" id="snd">Sound on</button>
@@ -125,6 +181,9 @@
   </header>
 
   <div class="window" id="win">
+    <div class="finder"><i></i><i></i><i></i><i></i></div>
+    <div id="reticle" hidden><svg viewBox="-28 -28 56 56" fill="none" stroke="currentColor" stroke-width="3"><circle r="15"/><path d="M0-27v9M0 18v9M-27 0h9M18 0h9"/><circle r="2.5" fill="currentColor" stroke="none"/></svg></div>
+    <div id="intro"><small id="introOf"></small><b class="chakra" id="introName"></b></div>
     <section class="screen" id="title">
       <div class="plates chakra" id="plates"><span class="plate l">Hinge</span><i class="pin"></i><span class="plate r">Hunt</span></div>
       <p class="lede" id="lede">Five objects. Find what makes them move.</p>
@@ -150,6 +209,7 @@
 
     <section class="screen" id="end" hidden>
       <div class="case">
+        <div class="stamp chakra" id="rank" hidden><b id="rankLetter"></b><small>Rank</small></div>
         <h2 class="chakra">Case closed</h2>
         <div class="total chakra" id="total"></div>
         <div class="rows" id="rows"></div>
@@ -237,6 +297,7 @@ const noise = (dur, vol, at) => voice(() => {
 }, dur, vol, at);
 const sfx = {
   click: () => noise(0.025, 0.35),
+  whoosh: () => { noise(0.3, 0.12); tone(220, 900, 0.25, "sawtooth", 0.025); },
   tick: () => tone(1500, 1500, 0.04, "square", 0.04),
   chirp: () => tone(700, 2600, 0.14, "square", 0.04),
   snap: () => { noise(0.04, 0.5); tone(180, 55, 0.14, "sine", 0.35); },
@@ -245,13 +306,38 @@ const sfx = {
 };
 
 // ---------- 3D ----------
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: false });
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 win.prepend(renderer.domElement);
 const scene = new THREE.Scene();
 scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment()).texture;
+scene.environmentIntensity = 0.7;
+
+// Studio: a key light that casts the object's shadow onto the pedestal, a cool rim light from behind.
+const key = new THREE.DirectionalLight(0xfff4e6, 2.2), rim = new THREE.DirectionalLight(0xbfefff, 2.4);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.bias = -0.0004;
+scene.add(key, key.target, rim, rim.target);
+// The pedestal: a porcelain top on a lacquer base. In ghost view the top goes dark like the fixed parts.
+const porcelain = new THREE.MeshPhysicalMaterial({ color: 0xf4f1e8, roughness: 0.35, clearcoat: 1, clearcoatRoughness: 0.12 });
+const lacquer = new THREE.MeshPhysicalMaterial({ color: 0x17191c, roughness: 0.3, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.08 });
+const GHOST = new THREE.MeshStandardMaterial({ color: 0x1f3a3b, metalness: 0.55, roughness: 0.32 });
+const GHOST_FLOOR = new THREE.MeshStandardMaterial({ color: 0x0c1a1b, roughness: 0.55, envMapIntensity: 0.25 });
+const pedTop = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 96), porcelain);
+const pedBase = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 96), lacquer);
+pedTop.receiveShadow = true;
+const pedestal = new THREE.Group();
+pedestal.add(pedTop, pedBase);
+pedestal.visible = false;
+scene.add(pedestal);
 const camera = new THREE.PerspectiveCamera(35, 1, 0.001, 100);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enablePan = false;
+controls.autoRotateSpeed = 1.5;
 const loader = new GLTFLoader();
 const nums = (el, attr, d = "0 0 0") => (el?.getAttribute(attr) ?? d).trim().split(/\s+/).map(Number);
 let obj = null, marks = [], swing = null, spin = false, grow = null;
@@ -333,6 +419,25 @@ function place(o) {
   const closed = new THREE.Box3().setFromObject(o.group);
   o.diag = closed.getSize(new THREE.Vector3()).length(); // scoring scale: the closed object
   box.union(closed);
+  // The pedestal moves to the object, never the object to the pedestal: stored taps are in object coordinates.
+  const c = closed.getCenter(new THREE.Vector3()), s = closed.getSize(new THREE.Vector3());
+  const r = Math.hypot(s.x, s.z) * 0.5, h = o.diag * 0.05;
+  pedTop.scale.set(r, h * 0.35, r);
+  pedTop.position.set(0, -h * 0.175, 0);
+  pedBase.scale.set(r * 1.06, h, r * 1.06);
+  pedBase.position.set(0, -h * 0.35 - h / 2, 0);
+  pedestal.position.set(c.x, closed.min.y, c.z);
+  pedestal.visible = true;
+  o.group.traverse(m => { if (m.isMesh) m.castShadow = true; });
+  key.position.copy(c).add(new THREE.Vector3(0.6, 1.4, 0.8).multiplyScalar(o.diag * 2));
+  key.target.position.copy(c);
+  rim.position.copy(c).add(new THREE.Vector3(-0.8, 0.9, -1.2).multiplyScalar(o.diag * 2));
+  rim.target.position.copy(c);
+  const sc = key.shadow.camera, e = o.diag * 1.2;
+  Object.assign(sc, { left: -e, right: e, top: e, bottom: -e, near: o.diag * 0.5, far: o.diag * 6 });
+  sc.updateProjectionMatrix();
+  pedestal.updateMatrixWorld(true);
+  box.union(new THREE.Box3().setFromObject(pedestal)); // keep the whole pedestal in frame
   controls.target.copy(box.getCenter(new THREE.Vector3()));
   const fit = box.getSize(new THREE.Vector3()).length() * 1.6 / Math.min(1, camera.aspect) ** 0.8; // narrow windows need the camera further back
   camera.position.copy(controls.target).add(new THREE.Vector3(0.75, 0.55, 1).normalize().multiplyScalar(fit));
@@ -375,9 +480,45 @@ function rod(a, b) {
 }
 const partName = o => o.joint.part.replace(/_/g, " ").replace(/\d+/g, "").trim();
 
+// Ghost view as an x-ray: fixed parts go dark, the part that moves keeps its texture and lights up mint.
+function xray(on) {
+  const moving = new Set();
+  obj.joint.move.traverse(m => moving.add(m));
+  obj.group.traverse(m => {
+    if (!m.isMesh) return;
+    m.userData.orig ??= m.material;
+    if (!on) return void (m.material = m.userData.orig);
+    if (moving.has(m)) {
+      m.userData.lit ??= Object.assign(m.userData.orig.clone(), { emissive: new THREE.Color(css("--mint")), emissiveIntensity: 0.32 });
+      m.material = m.userData.lit;
+    } else m.material = GHOST;
+  });
+  pedTop.material = on ? GHOST_FLOOR : porcelain;
+}
+
+// Result pips in the housing: one per object, coloured by how close the tap was.
+function pips() {
+  $("pips").innerHTML = run.map((_, i) => {
+    const r = results[i];
+    return `<i class="${!r ? (i === at ? "now" : "") : r.gain >= 75 ? "hit" : r.gain >= 30 ? "near" : "miss"}"></i>`;
+  }).join("");
+}
+
+// Reticle: follows the pointer over the window while a round is live; red when it is over the object.
+const reticle = $("reticle");
+function aimAt(e) {
+  const r = win.getBoundingClientRect();
+  reticle.style.transform = `translate(${e.clientX - r.left}px, ${e.clientY - r.top}px)`;
+  const c = renderer.domElement.getBoundingClientRect(), ray = new THREE.Raycaster();
+  ray.setFromCamera(new THREE.Vector2(((e.clientX - c.left) / c.width) * 2 - 1, -((e.clientY - c.top) / c.height) * 2 + 1), camera);
+  reticle.classList.toggle("on", !!ray.intersectObject(obj.group, true)[0]);
+}
+renderer.domElement.addEventListener("pointermove", e => { if (tapHandler && obj) { reticle.hidden = false; aimAt(e); } });
+renderer.domElement.addEventListener("pointerleave", () => { if (tapHandler) reticle.hidden = true; });
+
 renderer.setAnimationLoop(t => {
   if (obj && swing !== null) setPose((1 - Math.cos((t - swing) / 650)) / 2);
-  if (obj && spin) obj.group.rotation.y = t / 6000;
+  controls.autoRotate = spin; // the title turns the camera around the object, so it stays on its pedestal
   if (grow) grow.mesh.scale.y = Math.max(0.001, Math.min(1, (t - grow.t0) / 250)); // the hinge line draws in
   controls.update();
   renderer.render(scene, camera);
@@ -399,7 +540,7 @@ function snapshot() {
 let run = [], at = 0, total = 0, results = [], tapHandler = null, started = 0, timerId;
 
 let down;
-renderer.domElement.addEventListener("pointerdown", e => (down = [e.clientX, e.clientY]));
+renderer.domElement.addEventListener("pointerdown", e => { down = [e.clientX, e.clientY]; if (tapHandler && obj) { reticle.hidden = false; aimAt(e); } });
 renderer.domElement.addEventListener("pointerup", e => {
   if (!tapHandler || !down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
   const r = renderer.domElement.getBoundingClientRect();
@@ -412,7 +553,6 @@ renderer.domElement.addEventListener("pointerup", e => {
 async function startRun(ids) {
   run = ids; at = 0; total = 0; results = [];
   spin = false;
-  if (obj) obj.group.rotation.y = 0;
   await playRound();
 }
 
@@ -420,9 +560,12 @@ async function playRound() {
   const id = run[at];
   win.classList.remove("ghost");
   show("round");
+  reticle.hidden = true;
+  reticle.className = "";
   $("ask").textContent = "Loading the object…";
   $("hint").textContent = "";
-  hud(`Object ${at + 1} of ${run.length}`, total);
+  hud("", total);
+  pips();
   $("dial").classList.remove("late");
   $("arc").style.strokeDashoffset = 0;
   $("secs").textContent = ROUND_SECONDS;
@@ -436,8 +579,20 @@ async function playRound() {
   }
   swing = null;
   if (run[at + 1]) fetchZip(run[at + 1]); // preload the next object while this one is played
-  $("ask").textContent = `Where does the ${partName(obj)} pivot?`;
+  // Intro band: which object this is, then the question and the clock.
+  $("ask").textContent = "";
+  $("introOf").textContent = `Object ${at + 1} of ${run.length}`;
+  $("introName").textContent = round.name || "Your object";
+  $("intro").className = "";
+  void $("intro").offsetWidth; // restart the animation
+  $("intro").className = "go";
+  sfx.whoosh();
+  await wait(1000);
+  const part = document.createElement("mark");
+  part.textContent = partName(obj);
+  $("ask").replaceChildren("Where does the ", part, " pivot?");
   $("hint").textContent = "Tap the spot. Drag to turn it.";
+  win.classList.add("aiming");
   started = performance.now();
   let shown = ROUND_SECONDS;
   const tick = () => {
@@ -472,14 +627,17 @@ async function answer(p, round) {
   const crowd = p
     ? api(`/api/rounds/${round.id}/guesses`, { method: "POST", body: JSON.stringify({ p: p.toArray(), score: close * 100 }) }).then(g => g.slice(0, -1), () => [])
     : Promise.resolve(round.guesses || []);
-  if (p) mark(p, css("--red"), 1);
+  win.classList.remove("aiming");
+  if (p) { reticle.classList.add("lock"); mark(p, css("--red"), 1); } else reticle.hidden = true;
   show("reveal");
   $("slab").className = "slab";
   $("slab").hidden = true;
   $("next").hidden = true;
 
   await wait(150);
+  reticle.hidden = true;
   win.classList.add("ghost");
+  xray(true);
   grow = { mesh: rod(...hinge), t0: performance.now() };
   sfx.chirp();
 
@@ -497,13 +655,15 @@ async function answer(p, round) {
       + (others.length ? ` ${beat} of ${others.length} ${others.length === 1 ? "player was" : "players were"} further off.` : " You're the first to play this one.");
   $("slab").hidden = false;
   $("slab").className = "slab in" + (gain >= 90 ? " perfect" : "");
+  if (gain >= 40) { win.classList.remove("shake"); void win.offsetWidth; win.classList.add("shake"); }
   sfx.reward(close);
+  pips();
   const t0 = performance.now();
   const count = () => {
     const k = Math.min(1, (performance.now() - t0) / 450);
     $("gain").textContent = `+${Math.round(gain * k)}`;
     if (k < 1) requestAnimationFrame(count);
-    else hud(`Object ${at + 1} of ${run.length}`, total);
+    else hud("", total);
   };
   count();
   $("next").textContent = at + 1 < run.length ? "Next object" : "See your score";
@@ -520,12 +680,27 @@ function finish() {
   show("end");
   win.classList.remove("ghost");
   hud("", "");
+  pips();
   swing = null;
   if (obj) { scene.remove(obj.group); obj = null; }
+  pedestal.visible = false;
   clearMarks();
-  $("total").innerHTML = `${total}<small> / ${run.length * 100}</small>`;
+  const max = run.length * 100, share = total / max;
+  const t0 = performance.now();
+  const count = () => {
+    const k = Math.min(1, (performance.now() - t0) / 700);
+    $("total").innerHTML = `${Math.round(total * k)}<small> / ${max}</small>`;
+    if (k < 1) requestAnimationFrame(count);
+  };
+  count();
+  $("rank").hidden = true;
+  setTimeout(() => {
+    $("rankLetter").textContent = share >= 0.85 ? "S" : share >= 0.65 ? "A" : share >= 0.4 ? "B" : "C";
+    $("rank").hidden = false;
+    sfx.snap();
+  }, 750 + results.length * 90);
   $("rows").innerHTML = "";
-  for (const r of results) {
+  for (const [i, r] of results.entries()) {
     const row = document.createElement("div"), img = document.createElement("img"), name = document.createElement("span"), pts = document.createElement("b");
     img.src = r.thumb || "";
     img.alt = "";
@@ -533,6 +708,7 @@ function finish() {
     pts.textContent = r.gain;
     pts.className = r.gain >= 75 ? "hit" : "";
     row.append(img, name, pts);
+    row.style.animationDelay = `${300 + i * 90}ms`;
     $("rows").append(row);
   }
 }
