@@ -1,3 +1,5 @@
 .env
 spike/out/
 spike/slim/
+spike/bench.js
+spike/iso-kit.mjs

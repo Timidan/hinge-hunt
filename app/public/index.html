@@ -21,35 +21,27 @@
   .hud { display: flex; align-items: center; gap: 18px; min-height: 64px; padding: 0 10px 0 18px; border-radius: 14px;
     background: linear-gradient(#262a30, #17191c 70%); box-shadow: inset 0 1px 0 #ffffff24, inset 0 -1px 0 #000, 0 1px 0 #ffffff0d; }
   .hud .name { font-size: 18px; }
-  .hud .score { font-size: 26px; font-variant-numeric: tabular-nums; color: var(--bone); }
   .hud .spacer { flex: 1; }
   .hud small { color: var(--silver); font-size: 15px; }
-  #dial { width: 52px; height: 52px; flex: none; }
-  #dial circle { fill: none; stroke-width: 5; }
-  #dial .track { stroke: #2c3036; }
-  #dial #arc { stroke: var(--bone); stroke-linecap: round; transform: rotate(-90deg); transform-origin: 30px 30px; }
-  #dial text { fill: var(--bone); font: 700 22px "Chakra Petch"; text-anchor: middle; }
-  #dial.late #arc { stroke: var(--red); }
-  #dial.late text { fill: var(--red); }
 
-  /* inspection window */
-  .window { position: relative; overflow: hidden; border-radius: 18px; color: var(--lacquer); transition: color .25s;
-    background: radial-gradient(120% 95% at 50% 62%, #fdfcf7 0%, #ece9df 55%, #d3cfc2 100%);
+  /* inspection window: the bench drawing fills it, the object's canvas sits on the drawing */
+  .window { position: relative; overflow: clip; border-radius: 18px; color: var(--bone); background: var(--lacquer); container-type: size;
     box-shadow: 0 0 0 3px #0b0c0e, 0 1px 0 4px #ffffff12; }
-  /* ghost view: a dark layer fades in under the canvas; scanlines fade in over it */
-  .window::before, .window::after { content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity .25s; pointer-events: none; }
-  .window::before { z-index: 0; background: radial-gradient(120% 95% at 50% 62%, #1a3634 0%, #0d1b1d 60%, #060b0c 100%); }
-  .window::after { z-index: 3; background: repeating-linear-gradient(#ffffff08 0 1px, transparent 1px 3px); }
-  .window.ghost { color: var(--bone); }
-  .window.ghost::before, .window.ghost::after { opacity: 1; }
+  /* ghost view: scanlines over the bench */
+  .window::after { content: ""; position: absolute; inset: 0; z-index: 3; opacity: 0; transition: opacity .25s; pointer-events: none;
+    background: repeating-linear-gradient(#4de5d10a 0 1px, transparent 1px 3px); }
+  .window.ghost::after { opacity: 1; }
   .window.shake { animation: shake .28s cubic-bezier(.3, .7, .4, 1); }
   @keyframes shake { 20% { transform: translate(-7px, 4px); } 45% { transform: translate(5px, -3px); } 70% { transform: translate(-2px, 1px); } }
-  canvas { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; touch-action: none; display: block; }
+  /* the bench fills the window's width, or is cropped round the turntable on a tall phone */
+  .stage { position: absolute; left: 50%; top: 52%; z-index: 1; aspect-ratio: 640 / 480; width: max(100cqw, min(133.3cqh, 230cqw)); transform: translate(-48%, -60%); }
+  .stage > svg, .stage > canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .stage > canvas { touch-action: none; }
   .aiming canvas { cursor: none; }
 
   /* viewfinder corners */
   .finder { position: absolute; inset: 14px; z-index: 2; pointer-events: none; }
-  .finder i { position: absolute; width: 28px; height: 28px; border: 0 solid #17191c4d; transition: border-color .25s; }
+  .finder i { position: absolute; width: 28px; height: 28px; border: 0 solid #ffffff33; transition: border-color .25s; }
   .finder i:nth-child(1) { left: 0; top: 0; border-width: 3px 0 0 3px; }
   .finder i:nth-child(2) { right: 0; top: 0; border-width: 3px 3px 0 0; }
   .finder i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 3px 3px; }
@@ -57,7 +49,7 @@
   .ghost .finder i { border-color: #4de5d199; }
 
   /* reticle: follows the pointer, red over the object, contracts when it locks */
-  #reticle { position: absolute; left: 0; top: 0; z-index: 4; width: 56px; height: 56px; margin: -28px 0 0 -28px; pointer-events: none; color: var(--lacquer); }
+  #reticle { position: absolute; left: 0; top: 0; z-index: 4; width: 56px; height: 56px; margin: -28px 0 0 -28px; pointer-events: none; color: var(--bone); }
   #reticle svg { width: 100%; height: 100%; overflow: visible; transition: transform .12s, color .12s; }
   #reticle.on { color: var(--red); }
   #reticle.on svg { transform: rotate(45deg) scale(.86); }
@@ -88,7 +80,7 @@
   .screen > * { pointer-events: auto; }
   .screen .spacer { flex: 1; pointer-events: none; }
   .ask { margin: 0; font-size: clamp(28px, 4.6vw, 60px); line-height: 1; letter-spacing: -0.01em; max-width: 16ch; text-wrap: balance; }
-  .hint { margin: 0; font-size: 18px; color: #4a4d52; max-width: 60ch; }
+  .hint { margin: 0; font-size: 18px; color: var(--silver); max-width: 60ch; }
   #end { overflow-y: auto; } /* five rows can outgrow a short phone */
   .ghost .hint { color: var(--silver); }
   .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
@@ -174,13 +166,12 @@
     <span class="name chakra">Hinge Hunt</span>
     <small id="hudObj"></small>
     <span class="pips" id="pips"></span>
-    <span class="score chakra" id="hudScore"></span>
     <span class="spacer"></span>
     <button class="btn quiet" id="snd">Sound on</button>
-    <svg id="dial" viewBox="0 0 60 60" hidden><circle class="track" cx="30" cy="30" r="26"/><circle id="arc" cx="30" cy="30" r="26" stroke-dasharray="163.4"/><text id="secs" x="30" y="38">15</text></svg>
   </header>
 
   <div class="window" id="win">
+    <div class="stage iso hh-bench" id="stage"></div>
     <div class="finder"><i></i><i></i><i></i><i></i></div>
     <div id="reticle" hidden><svg viewBox="-28 -28 56 56" fill="none" stroke="currentColor" stroke-width="3"><circle r="15"/><path d="M0-27v9M0 18v9M-27 0h9M18 0h9"/><circle r="2.5" fill="currentColor" stroke="none"/></svg></div>
     <div id="intro"><small id="introOf"></small><b class="chakra" id="introName"></b></div>
@@ -242,7 +233,8 @@
 <script type="module">
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import * as B from "./bench.js";
+import * as K from "./iso-kit.mjs";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { unzipSync } from "fflate";
 
@@ -256,9 +248,8 @@ const api = async (path, opts) => { const r = await fetch(path, opts); const b =
 const win = $("win");
 function show(id) {
   for (const s of document.querySelectorAll(".screen")) s.hidden = s.id !== id;
-  $("dial").toggleAttribute("hidden", id !== "round" && id !== "reveal"); // SVG has no .hidden property
 }
-function hud(obj, score) { $("hudObj").textContent = obj; $("hudScore").textContent = score; }
+function hud(text) { $("hudObj").textContent = text; }
 
 // ---------- sound: synthesized, no files ----------
 let ac, muted = false;
@@ -305,59 +296,98 @@ const sfx = {
   reward: c => { tone(523, 523, 0.16, "triangle", 0.18); tone(c > 0.75 ? 1047 : c > 0.3 ? 784 : 494, c > 0.75 ? 1047 : c > 0.3 ? 784 : 466, 0.34, "triangle", 0.18, 0.13); },
 };
 
-// ---------- 3D ----------
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: false });
+// ---------- the bench and the 3D object on it ----------
+// The bench is a drawing (bench/build.mjs) in the anatomy kit's orthographic camera. The object renders in a
+// three.js camera built from the same projection, on a canvas over the drawing, so it stands on the drawn platter.
+const stage = $("stage");
+document.head.insertAdjacentHTML("beforeend", `<style>${B.CSS}</style>`);
+stage.insertAdjacentHTML("afterbegin", B.SVG);
+const P = B.P, TT = B.TT;
+const parts = name => stage.querySelector(`[data-part="${name}"]`);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-win.prepend(renderer.domElement);
+stage.append(renderer.domElement);
 const scene = new THREE.Scene();
 scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment()).texture;
-scene.environmentIntensity = 0.7;
-
-// Studio: a key light that casts the object's shadow onto the pedestal, a cool rim light from behind.
-const key = new THREE.DirectionalLight(0xfff4e6, 2.2), rim = new THREE.DirectionalLight(0xbfefff, 2.4);
+scene.environmentIntensity = 0.6;
+// The kit's world is mirrored against three.js (on screen +x runs right, +y left), so kit (x, y, z) is three (x, -y, z).
+const toThree = ([x, y, z]) => new THREE.Vector3(x, -y, z);
+const camera = (() => {
+  const A = (P.azimuth ?? 45) * Math.PI / 180, E = (P.elevation ?? 30) * Math.PI / 180, K = P.scale * Math.sqrt(1.6);
+  const c = new THREE.OrthographicCamera(-P.origin[0] / K, (B.VIEW.w - P.origin[0]) / K, P.origin[1] / K, (P.origin[1] - B.VIEW.h) / K, 1, 20000);
+  c.up.set(-Math.cos(A) * Math.sin(E), Math.sin(A) * Math.sin(E), Math.cos(E));
+  c.position.set(Math.cos(A) * Math.cos(E), -Math.sin(A) * Math.cos(E), Math.sin(E)).multiplyScalar(5000);
+  c.lookAt(0, 0, 0);
+  return c;
+})();
+// The desk lamp is the key light; a cool rim light comes from behind the rack.
+const platter = toThree([TT.x, TT.y, TT.top]);
+const key = new THREE.DirectionalLight(0xfff4e6, 2.6), rim = new THREE.DirectionalLight(0xbfefff, 1.6);
+key.position.copy(toThree(B.LIGHT_AT));
+rim.position.copy(toThree([140, -150, 120]));
+key.target.position.copy(platter);
+rim.target.position.copy(platter);
 key.castShadow = true;
 key.shadow.mapSize.set(2048, 2048);
-key.shadow.bias = -0.0004;
+key.shadow.bias = -0.0005;
+Object.assign(key.shadow.camera, { left: -130, right: 130, top: 130, bottom: -130, near: 1, far: 700 });
 scene.add(key, key.target, rim, rim.target);
-// The pedestal: a porcelain top on a lacquer base. In ghost view the top goes dark like the fixed parts.
-const porcelain = new THREE.MeshPhysicalMaterial({ color: 0xf4f1e8, roughness: 0.35, clearcoat: 1, clearcoatRoughness: 0.12 });
-const lacquer = new THREE.MeshPhysicalMaterial({ color: 0x17191c, roughness: 0.3, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.08 });
+// the object's shadow falls on the drawn platter
+const floor = new THREE.Mesh(new THREE.CircleGeometry(TT.R - 1, 96), new THREE.ShadowMaterial({ opacity: 0.45 }));
+floor.position.copy(platter);
+floor.receiveShadow = true;
+scene.add(floor);
+// spin turns with the platter; fix stands a y-up glTF upright (z-up) at bench scale
+const spinner = new THREE.Group(), fix = new THREE.Group(), centre = new THREE.Group();
+spinner.position.copy(platter);
+fix.rotation.x = Math.PI / 2;
+spinner.add(fix);
+fix.add(centre);
+scene.add(spinner);
 const GHOST = new THREE.MeshStandardMaterial({ color: 0x1f3a3b, metalness: 0.55, roughness: 0.32 });
-const GHOST_FLOOR = new THREE.MeshStandardMaterial({ color: 0x0c1a1b, roughness: 0.55, envMapIntensity: 0.25 });
-const pedTop = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 96), porcelain);
-const pedBase = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 96), lacquer);
-pedTop.receiveShadow = true;
-const pedestal = new THREE.Group();
-pedestal.add(pedTop, pedBase);
-pedestal.visible = false;
-scene.add(pedestal);
-const camera = new THREE.PerspectiveCamera(35, 1, 0.001, 100);
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enablePan = false;
-controls.autoRotateSpeed = 1.5;
 const loader = new GLTFLoader();
 const nums = (el, attr, d = "0 0 0") => (el?.getAttribute(attr) ?? d).trim().split(/\s+/).map(Number);
-let obj = null, marks = [], swing = null, spin = false, grow = null;
+let obj = null, marks = [], swing = null, spin = false, grow = null, turn = 0;
 
-// The object sits a little below centre, under the question.
-function frame() {
-  const w = win.clientWidth, h = win.clientHeight;
-  camera.setViewOffset(w, h, 0, -h * 0.05, w, h);
-}
 function resize() {
-  const w = win.clientWidth, h = win.clientHeight;
-  if (!w || !h) return;
+  const r = stage.getBoundingClientRect();
+  if (!r.width) return;
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  renderer.setSize(w, h, false);
-  camera.aspect = w / h;
-  frame();
-  camera.updateProjectionMatrix();
+  renderer.setSize(r.width, r.height, false);
 }
-new ResizeObserver(resize).observe(win);
-resize();
+new ResizeObserver(resize).observe(stage);
+
+// ---------- instruments ----------
+// Turntable ticks turn with the platter (radialTicks' angles run clockwise seen from above, three's the other way).
+function setTurn(a) {
+  turn = a;
+  spinner.rotation.z = a;
+  const t = K.radialTicks(TT.x, TT.y, TT.R - 1.2, 72, 6, TT.top, [2.2, 4.6], P, -a);
+  const [minor, major] = parts("ttTicks").children;
+  minor.setAttribute("d", t.minor);
+  major.setAttribute("d", t.major);
+}
+const dialNeedle = (d, share, from = 0, span = Math.PI * 2) => {
+  const a = from + share * span;
+  return K.lineOnTop([d.x - Math.sin(a) * 3, d.y + Math.cos(a) * 3], [d.x + Math.sin(a) * (d.R - 3.6), d.y - Math.cos(a) * (d.R - 3.6)], d.z + 0.2, P);
+};
+const setTimer = share => parts("timerNeedle").setAttribute("d", dialNeedle(B.TIMER, share));
+// the dial indicator reads the miss: full scale is 30% of the object's size, where a tap earns nothing
+const setGauge = share => parts("gaugeNeedle").setAttribute("d", dialNeedle(B.GAUGE_DIAL, Math.min(1, Math.max(0, share)), -Math.PI * 0.75, Math.PI * 1.5));
+function setCounter(n) { String(Math.min(999, n)).padStart(3, "0").split("").forEach((d, i) => (parts(`digit${i}`).textContent = d)); }
+// drawer i slides out toward the viewer when its object is on the turntable; its tab shows the result
+const drawerOut = K.axisVector(P, [0, 18, 0]);
+function setDrawers(open, done = []) {
+  for (let i = 0; i < B.RACK.drawers; i++) {
+    const g = parts(`drawer${i}`);
+    g.style.transform = i === open ? `translate(${drawerOut[0]}px, ${drawerOut[1]}px)` : "";
+    const r = done[i];
+    parts(`tab${i}`).style.fill = !r ? "none" : r.gain >= 75 ? "var(--mint)" : r.gain >= 30 ? "var(--silver)" : "var(--red)";
+  }
+}
 
 const zips = {};
 const fetchZip = id => (zips[id] ??= fetch(`/f/${id}/model.zip`).then(r => r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.status))));
@@ -407,45 +437,28 @@ async function loadObject(round) {
 
 function setPose(s) { for (const j of obj.joints) j.move.quaternion.setFromAxisAngle(j.axis, j.closed + s * j.swing); }
 
-function clearMarks() { for (const m of marks) scene.remove(m); marks = []; grow = null; }
+function clearMarks() { for (const m of marks) m.removeFromParent(); marks = []; grow = null; }
+// The object keeps its own coordinates (taps, guesses and the hinge are stored in them); only its holder moves.
 function place(o) {
-  if (obj) scene.remove(obj.group);
+  if (obj) obj.group.removeFromParent();
   clearMarks();
   obj = o;
-  scene.add(o.group);
-  setPose(1); // frame the open pose too, so the swing stays in the window
+  setPose(1);
   const box = new THREE.Box3().setFromObject(o.group);
   setPose(0);
   const closed = new THREE.Box3().setFromObject(o.group);
   o.diag = closed.getSize(new THREE.Vector3()).length(); // scoring scale: the closed object
+  o.hinge = hingeSegment(o); // measured before it is parented, so in its own coordinates
   box.union(closed);
-  // The pedestal moves to the object, never the object to the pedestal: stored taps are in object coordinates.
-  const c = closed.getCenter(new THREE.Vector3()), s = closed.getSize(new THREE.Vector3());
-  const r = Math.hypot(s.x, s.z) * 0.5, h = o.diag * 0.05;
-  pedTop.scale.set(r, h * 0.35, r);
-  pedTop.position.set(0, -h * 0.175, 0);
-  pedBase.scale.set(r * 1.06, h, r * 1.06);
-  pedBase.position.set(0, -h * 0.35 - h / 2, 0);
-  pedestal.position.set(c.x, closed.min.y, c.z);
-  pedestal.visible = true;
+  const size = box.getSize(new THREE.Vector3()), c = closed.getCenter(new THREE.Vector3());
+  fix.scale.setScalar(Math.min((TT.R * 1.5) / Math.hypot(size.x, size.z), 130 / size.y));
+  centre.position.set(-c.x, -closed.min.y, -c.z);
   o.group.traverse(m => { if (m.isMesh) m.castShadow = true; });
-  key.position.copy(c).add(new THREE.Vector3(0.6, 1.4, 0.8).multiplyScalar(o.diag * 2));
-  key.target.position.copy(c);
-  rim.position.copy(c).add(new THREE.Vector3(-0.8, 0.9, -1.2).multiplyScalar(o.diag * 2));
-  rim.target.position.copy(c);
-  const sc = key.shadow.camera, e = o.diag * 1.2;
-  Object.assign(sc, { left: -e, right: e, top: e, bottom: -e, near: o.diag * 0.5, far: o.diag * 6 });
-  sc.updateProjectionMatrix();
-  pedestal.updateMatrixWorld(true);
-  box.union(new THREE.Box3().setFromObject(pedestal)); // keep the whole pedestal in frame
-  controls.target.copy(box.getCenter(new THREE.Vector3()));
-  const fit = box.getSize(new THREE.Vector3()).length() * 1.6 / Math.min(1, camera.aspect) ** 0.8; // narrow windows need the camera further back
-  camera.position.copy(controls.target).add(new THREE.Vector3(0.75, 0.55, 1).normalize().multiplyScalar(fit));
-  frame();
-  camera.updateProjectionMatrix();
+  centre.add(o.group);
+  setTurn(0);
 }
 
-function overlay(m) { m.renderOrder = 2; scene.add(m); marks.push(m); return m; }
+function overlay(m) { m.renderOrder = 2; obj.group.add(m); marks.push(m); return m; }
 function mark(p, color, size) {
   const m = new THREE.Mesh(new THREE.SphereGeometry(obj.diag * 0.014 * size), new THREE.MeshBasicMaterial({ color, depthTest: false }));
   m.position.copy(p);
@@ -455,8 +468,9 @@ function line(a, b) {
   return overlay(new THREE.Line(new THREE.BufferGeometry().setFromPoints([a, b]), new THREE.LineBasicMaterial({ color: css("--bone"), depthTest: false })));
 }
 // The hinge is a line, not a point: the joint axis, clipped to the moving part's extent along it.
-function hingeSegment() {
-  const j = obj.joint;
+function hingeSegment(o) {
+  o.group.updateMatrixWorld(true);
+  const j = o.joint;
   const origin = j.frame.getWorldPosition(new THREE.Vector3());
   const dir = j.axis.clone().applyQuaternion(j.frame.getWorldQuaternion(new THREE.Quaternion())).normalize();
   const box = new THREE.Box3().setFromObject(j.move);
@@ -493,7 +507,6 @@ function xray(on) {
       m.material = m.userData.lit;
     } else m.material = GHOST;
   });
-  pedTop.material = on ? GHOST_FLOOR : porcelain;
 }
 
 // Result pips in the housing: one per object, coloured by how close the tap was.
@@ -516,11 +529,13 @@ function aimAt(e) {
 renderer.domElement.addEventListener("pointermove", e => { if (tapHandler && obj) { reticle.hidden = false; aimAt(e); } });
 renderer.domElement.addEventListener("pointerleave", () => { if (tapHandler) reticle.hidden = true; });
 
+let last = 0;
 renderer.setAnimationLoop(t => {
+  const dt = last ? Math.min(0.05, (t - last) / 1000) : 0;
+  last = t;
   if (obj && swing !== null) setPose((1 - Math.cos((t - swing) / 650)) / 2);
-  controls.autoRotate = spin; // the title turns the camera around the object, so it stays on its pedestal
+  if (spin) setTurn(turn + dt * 0.35); // the title turns the platter slowly
   if (grow) grow.mesh.scale.y = Math.max(0.001, Math.min(1, (t - grow.t0) / 250)); // the hinge line draws in
-  controls.update();
   renderer.render(scene, camera);
 });
 
@@ -539,15 +554,30 @@ function snapshot() {
 // ---------- the run ----------
 let run = [], at = 0, total = 0, results = [], tapHandler = null, started = 0, timerId;
 
-let down;
-renderer.domElement.addEventListener("pointerdown", e => { down = [e.clientX, e.clientY]; if (tapHandler && obj) { reticle.hidden = false; aimAt(e); } });
-renderer.domElement.addEventListener("pointerup", e => {
-  if (!tapHandler || !down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
-  const r = renderer.domElement.getBoundingClientRect();
-  const ray = new THREE.Raycaster();
+// Drag across the bench to turn the platter; a tap without a drag is the guess.
+let down, dragFrom = null;
+const rayAt = e => {
+  const r = renderer.domElement.getBoundingClientRect(), ray = new THREE.Raycaster();
   ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
-  const hit = ray.intersectObject(obj.group, true)[0];
-  if (hit) tapHandler(hit.point);
+  return ray;
+};
+renderer.domElement.addEventListener("pointerdown", e => {
+  down = [e.clientX, e.clientY];
+  dragFrom = e.clientX;
+  renderer.domElement.setPointerCapture(e.pointerId);
+  if (tapHandler && obj) { reticle.hidden = false; aimAt(e); }
+});
+renderer.domElement.addEventListener("pointermove", e => {
+  if (dragFrom === null || !obj) return;
+  setTurn(turn + (e.clientX - dragFrom) * 0.012);
+  dragFrom = e.clientX;
+  spin = false;
+});
+renderer.domElement.addEventListener("pointerup", e => {
+  dragFrom = null;
+  if (!tapHandler || !down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
+  const hit = rayAt(e).intersectObject(obj.group, true)[0];
+  if (hit) tapHandler(obj.group.worldToLocal(hit.point.clone()));
 });
 
 async function startRun(ids) {
@@ -564,11 +594,13 @@ async function playRound() {
   reticle.className = "";
   $("ask").textContent = "Loading the object…";
   $("hint").textContent = "";
-  hud("", total);
+  hud("");
   pips();
-  $("dial").classList.remove("late");
-  $("arc").style.strokeDashoffset = 0;
-  $("secs").textContent = ROUND_SECONDS;
+  parts("timerNeedle").dataset.tone = "lit";
+  setTimer(0);
+  setGauge(0);
+  setCounter(total);
+  setDrawers(at, results);
   const round = await api(`/api/rounds/${id}`);
   try { place(await loadFresh(round)); }
   catch {
@@ -597,12 +629,11 @@ async function playRound() {
   let shown = ROUND_SECONDS;
   const tick = () => {
     const left = 1 - (performance.now() - started) / 1000 / ROUND_SECONDS;
-    $("arc").style.strokeDashoffset = 163.4 * (1 - Math.max(0, left));
+    setTimer(Math.min(1, 1 - left) * ROUND_SECONDS / 60); // the timer's face is 60 s around; 15 s is a quarter turn
     const secs = Math.max(0, Math.ceil(left * ROUND_SECONDS));
     if (secs !== shown) {
       shown = secs;
-      $("secs").textContent = secs;
-      if (secs <= 3 && secs > 0) { $("dial").classList.add("late"); sfx.tick(); }
+      if (secs <= 3 && secs > 0) { parts("timerNeedle").dataset.tone = "red"; sfx.tick(); } // the last three seconds
     }
     if (left <= 0) return answer(null, round);
     timerId = requestAnimationFrame(tick);
@@ -617,7 +648,7 @@ async function answer(p, round) {
   tapHandler = null;
   cancelAnimationFrame(timerId);
   sfx.click();
-  const hinge = hingeSegment();
+  const hinge = obj.hinge;
   const pivot = p ? nearestOn(hinge, p) : hinge[0];
   const secs = (performance.now() - started) / 1000;
   const close = p ? Math.max(0, 1 - p.distanceTo(pivot) / (0.3 * obj.diag)) : 0;
@@ -658,12 +689,16 @@ async function answer(p, round) {
   if (gain >= 40) { win.classList.remove("shake"); void win.offsetWidth; win.classList.add("shake"); }
   sfx.reward(close);
   pips();
+  setDrawers(at, results);
+  // The dial indicator swings to the miss while the score and the counter count up.
+  const miss = p ? p.distanceTo(pivot) / (0.3 * obj.diag) : 1;
   const t0 = performance.now();
   const count = () => {
-    const k = Math.min(1, (performance.now() - t0) / 450);
+    const k = Math.min(1, (performance.now() - t0) / 450), e = 1 - (1 - k) ** 3;
     $("gain").textContent = `+${Math.round(gain * k)}`;
+    setGauge(miss * e);
+    setCounter(total - gain + Math.round(gain * k));
     if (k < 1) requestAnimationFrame(count);
-    else hud("", total);
   };
   count();
   $("next").textContent = at + 1 < run.length ? "Next object" : "See your score";
@@ -679,11 +714,10 @@ $("next").onclick = () => {
 function finish() {
   show("end");
   win.classList.remove("ghost");
-  hud("", "");
+  hud("");
   pips();
   swing = null;
-  if (obj) { scene.remove(obj.group); obj = null; }
-  pedestal.visible = false;
+  if (obj) { obj.group.removeFromParent(); obj = null; }
   clearMarks();
   const max = run.length * 100, share = total / max;
   const t0 = performance.now();
@@ -740,7 +774,7 @@ for (const input of document.querySelectorAll(".photo")) input.onchange = async 
   const f = e.target.files[0];
   if (!f) return;
   show("make");
-  hud("Your object", "");
+  hud("Your object");
   $("makeAsk").textContent = "Uploading your photo";
   $("makeHint").textContent = "";
   stages(0);
@@ -764,7 +798,7 @@ const STAGES = { mesh: [1, "Building the 3D model", "Lux3D is turning your photo
   mechanism: [2, "Finding what moves", "Lux3D is working out the parts and the hinge. About three minutes."] };
 async function owner(id, s) {
   show("make");
-  hud("Your object", "");
+  hud("Your object");
   const t0 = Date.now();
   for (;;) {
     let r;
@@ -815,7 +849,7 @@ async function title() {
   const r = params.get("r");
   const { date, rounds } = r ? { date: null, rounds: [r] } : await api("/api/today");
   const when = date && new Date(date + "T12:00:00Z").toLocaleDateString(undefined, { day: "numeric", month: "short" });
-  hud(r ? "1 object" : `${when} · ${rounds.length} objects`, "");
+  hud(r ? "1 object" : `${when} · ${rounds.length} objects`);
   const count = ["One", "Two", "Three", "Four", "Five"][rounds.length - 1] ?? rounds.length;
   $("lede").textContent = rounds.length === 1 ? "One object. Find what makes it move." : `${count} objects. Find what makes them move.`;
   $("play").textContent = r ? "Start this hunt" : "Start today's hunt";
