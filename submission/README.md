@@ -36,10 +36,7 @@ The three palette properties are at the top of the HTML: `--page`, `--ink` and `
 6. What we tried and dropped: rejected candidates and the current laptop/radio corrections.
 7. How it is built: browser, Worker, Durable Object, KV and the live forge.
 8. Limits: client-reported times and objects generated ahead of play.
-9. Play Hinge Hunt: visible link placeholders and game credits.
-
-Lux3D receives the most space across the pipeline, movement and candidate pages.
-The exact page order follows the supplied brief. Judging weights are not presented as project results.
+9. Play Hinge Hunt: the live game, the source and game credits.
 
 ## Numbers and their sources
 
@@ -59,7 +56,7 @@ The exact page order follows the supplied brief. Judging weights are not present
 | One game page | README and `app/public/index.html`. |
 | G1-Turbo | Model identifier in README and `spike/lux.py`; not a performance metric. |
 | 3D in Lux3D, text-to-3D and the event name; 3 in `batch3-art.sh` | Source names/identifiers, not reported counts. |
-| Page numbers 1 to 9 | Report navigation, as requested in the brief. |
+| Page numbers 1 to 9 | Report navigation. |
 
 `source-counts.json` records each indexed object's rig path and its counts. The build regenerates this ledger.
 Two split-part entries are merged into other parts: `mousetrap/rig.json` part 5 into part 0, and `chest/rig.json` part 5 into part 0.
@@ -90,12 +87,8 @@ All nine pages were rendered using CPU-only `pdftoppm` and visually inspected fo
 
 Page six describes the laptop's corrected hinge and seam, the joint set by hand on the radio, and the narrowed ranges and moved lunch-box hinge on the batch added on 16 November.
 
-Only report production was checked. The game, deployment and multiplayer behaviour were not run as part of this task.
-
-## Placeholders
+## Links
 
 - Team name: Hinge Hunt.
 - Live game: https://hingehunt.timidan.xyz
-- Source: to come.
-
-No source URL is invented; it is added once the repository is public.
+- Source: https://github.com/Timidan/hinge-hunt
