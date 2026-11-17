@@ -18,14 +18,18 @@ const PENALTY = 3; // seconds per wrong part, as in the page
 // The board ranks players by levels cleared, then progress in the next one, then the total of their 3 fastest
 // rebuilds in each cleared level. Ids never leave the server.
 const LEVELS = 6, CLEAR = 3;
+// best: the times behind the standing, which the board shows per player: each cleared level's 3 fastest rebuilds and
+// the rebuilds so far in the next level (at most 20 small entries, well inside KV's 1 KB of metadata)
 function standing(done) {
   let cleared = 0, total = 0;
+  const best = {};
   for (let l = 1; l <= LEVELS; l++) {
-    const t = POOL.filter(o => o.level === l && done[o.id] != null).map(o => done[o.id]).sort((a, b) => a - b);
-    if (t.length < CLEAR) return { cleared, now: t.length, total: Math.round(total * 10) / 10 };
-    cleared = l; total += t[0] + t[1] + t[2];
+    const t = POOL.filter(o => o.level === l && done[o.id] != null).sort((a, b) => done[a.id] - done[b.id]).slice(0, CLEAR);
+    for (const o of t) best[o.id] = done[o.id];
+    if (t.length < CLEAR) return { cleared, now: t.length, total: Math.round(total * 10) / 10, best };
+    cleared = l; total += t.reduce((s, o) => s + done[o.id], 0);
   }
-  return { cleared, now: 0, total: Math.round(total * 10) / 10 };
+  return { cleared, now: 0, total: Math.round(total * 10) / 10, best };
 }
 const ahead = (a, b) => b.cleared - a.cleared || b.now - a.now || a.total - b.total;
 async function credit(env, id, name, object, time) {
@@ -45,7 +49,10 @@ async function board(env) {
   // ponytail: one page of 1,000 players; follow the cursor if it ever grows past that
   const { keys } = await env.KV.list({ prefix: "player:" });
   boardAt = Date.now();
-  return (boardKept = keys.map(k => k.metadata).filter(Boolean).sort(ahead).slice(0, 20));
+  const top = keys.filter(k => k.metadata).map(k => ({ ...k.metadata, key: k.name })).sort(ahead).slice(0, 20);
+  // a record written before the board showed times has none in its metadata: work them out from the record itself
+  // (the key carries the player's id, so it is dropped before the board leaves the server)
+  return (boardKept = await Promise.all(top.map(async ({ key, ...m }) => (m.best ? m : { ...m, ...standing(((await env.KV.get(key, "json")) || { done: {} }).done) }))));
 }
 async function runs(req, env, object) {
   const o = POOL.find(o => o.id === object);

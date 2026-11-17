@@ -44,6 +44,7 @@
   .ph.ph-arrow-right { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z'/%3E%3C/svg%3E"); }
   .ph.ph-book-open { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M232,48H160a40,40,0,0,0-32,16A40,40,0,0,0,96,48H24a8,8,0,0,0-8,8V200a8,8,0,0,0,8,8H96a24,24,0,0,1,24,24,8,8,0,0,0,16,0,24,24,0,0,1,24-24h72a8,8,0,0,0,8-8V56A8,8,0,0,0,232,48ZM96,192H32V64H96a24,24,0,0,1,24,24V200A39.81,39.81,0,0,0,96,192Zm128,0H160a39.81,39.81,0,0,0-24,8V88a24,24,0,0,1,24-24h64Z'/%3E%3C/svg%3E"); }
   .ph.ph-check-circle { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z'/%3E%3C/svg%3E"); }
+  .ph.ph-caret-down { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E"); }
   .ph.ph-check-square { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM224,48V208a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V48A16,16,0,0,1,48,32H208A16,16,0,0,1,224,48ZM208,208V48H48V208H208Z'/%3E%3C/svg%3E"); }
   .ph.ph-check { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E"); }
   .ph.ph-circle-dashed { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M96.26,37.05A8,8,0,0,1,102,27.29a104.11,104.11,0,0,1,52,0,8,8,0,0,1-2,15.75,8.15,8.15,0,0,1-2-.26,88.09,88.09,0,0,0-44,0A8,8,0,0,1,96.26,37.05ZM53.79,55.14a104.05,104.05,0,0,0-26,45,8,8,0,0,0,15.42,4.27,88,88,0,0,1,22-38.09A8,8,0,0,0,53.79,55.14ZM43.21,151.55a8,8,0,1,0-15.42,4.28,104.12,104.12,0,0,0,26,45,8,8,0,0,0,11.41-11.22A88.14,88.14,0,0,1,43.21,151.55ZM150,213.22a88,88,0,0,1-44,0,8,8,0,1,0-4,15.49,104.11,104.11,0,0,0,52,0,8,8,0,0,0-4-15.49ZM222.65,146a8,8,0,0,0-9.85,5.58,87.91,87.91,0,0,1-22,38.08,8,8,0,1,0,11.42,11.21,104,104,0,0,0,26-45A8,8,0,0,0,222.65,146Zm-9.86-41.54a8,8,0,0,0,15.42-4.28,104,104,0,0,0-26-45,8,8,0,1,0-11.41,11.22A88,88,0,0,1,212.79,104.45Z'/%3E%3C/svg%3E"); }
@@ -289,7 +290,7 @@
   /* bottom: the parts inventory, events, Confirm */
   .botbar { position: fixed; left: 16px; right: 16px; bottom: max(14px, env(safe-area-inset-bottom)); display: flex; align-items: flex-end; gap: 12px; pointer-events: none; z-index: 2; }
   .botbar > * { pointer-events: auto; }
-  .inv { margin: 0 auto; display: flex; gap: 6px; padding: 8px; align-items: center; max-width: calc(100% - 200px); overflow-x: auto; }
+  .inv { margin: 0 auto; display: flex; gap: 6px; padding: 8px; align-items: center; max-width: calc(100% - 360px); overflow-x: auto; }
   .inv:empty { display: none; }
   .inv .lead { display: grid; justify-items: center; padding: 0 8px 0 4px; font: 500 12px var(--mono); color: var(--silver); white-space: nowrap; }
   .inv .lead .ph { font-size: 22px; color: var(--mint); }
@@ -301,8 +302,10 @@
   .slot.on i { display: block; }
   .slot.bad { border-color: var(--red); animation: nudge .4s; }
   @keyframes nudge { 25% { transform: translateX(-4px); } 60% { transform: translateX(3px); } }
-  #confirm { display: inline-flex; align-items: center; gap: 8px; padding: 14px 18px; font-size: 17px; flex: none; }
-  #confirm .ph { font-size: 20px; }
+  :is(#confirm, #showme) { display: inline-flex; align-items: center; gap: 8px; padding: 14px 18px; font-size: 17px; flex: none; }
+  :is(#confirm, #showme) .ph { font-size: 20px; }
+  #showme small { font: 500 12px var(--mono); opacity: .65; }
+  .botbar:has(#confirm[hidden]) #showme { display: none; } /* Hint comes and goes with Confirm */
   #confirm kbd { font: 500 11px var(--mono); border: 1px solid currentColor; border-radius: 3px; padding: 1px 5px; opacity: .65; }
   .hint { position: fixed; left: 0; right: 0; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 100px); text-align: center; margin: 0; padding: 0 12px; pointer-events: none; font-size: 15px; color: var(--silver); z-index: 2; text-shadow: 0 1px 3px var(--shade), 0 0 1px var(--shade); }
   .hint.go { color: var(--bone); }
@@ -337,14 +340,29 @@
   .leader { position: fixed; left: 16px; top: max(14px, env(safe-area-inset-top)); width: 300px; padding: 14px 14px 10px; z-index: 2; }
   @media (max-height: 760px), (max-width: 760px) { .leader { display: none; } }
   .leader h2 { margin: 0 0 8px; display: flex; align-items: center; gap: 8px; font: 600 15px var(--sans); }
-  .leader h2 .ph-fill { color: var(--mint); font-size: 20px; }
-  .leader ol { list-style: none; margin: 0; padding: 0; }
-  .leader li { display: grid; grid-template-columns: 18px 26px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid var(--hair); font: 500 13px var(--sans); }
-  .leader li:first-child { border-top: 0; }
-  .leader li .rank { font-family: var(--mono); color: var(--silver); }
-  .leader li small { display: block; color: var(--silver); font: 400 12px var(--mono); }
-  .leader li .t { font-family: var(--mono); }
-  .leader p { margin: 6px 0 0; font: 400 12px var(--mono); color: var(--silver); }
+  :is(.leader, #boards) h2 .ph-fill { color: var(--mint); font-size: 20px; }
+  :is(.leader, #boards) ol { list-style: none; margin: 0; padding: 0; }
+  :is(.leader, #boards) li { display: grid; grid-template-columns: 18px 26px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid var(--hair); font: 500 13px var(--sans); }
+  :is(.leader, #boards) li:first-child { border-top: 0; }
+  :is(.leader, #boards) li .rank { font-family: var(--mono); color: var(--silver); }
+  :is(.leader, #boards) li small { display: block; color: var(--silver); font: 400 12px var(--mono); }
+  :is(.leader, #boards) li .t { font-family: var(--mono); }
+  :is(.leader, #boards) p { margin: 6px 0 0; font: 400 12px var(--mono); color: var(--silver); }
+  #boards p { margin-bottom: 18px; }
+  #boards ol { display: block; } /* a list of rows, not How to play's grid of boxes */
+  #boards li { border: 0; border-top: 1px solid var(--hair); border-radius: 0; }
+  #boards li .ph { font-size: 18px; }
+  /* a player's row opens to the times behind it */
+  :is(.leader, #boards) li:has(> details) { display: block; }
+  :is(.leader, #boards) summary { display: grid; grid-template-columns: 18px 26px minmax(0, 1fr) auto; align-items: center; gap: 8px; cursor: pointer; list-style: none; }
+  :is(.leader, #boards) summary::-webkit-details-marker { display: none; }
+  :is(.leader, #boards) summary .t { display: flex; align-items: center; gap: 6px; }
+  :is(.leader, #boards) summary .ph-caret-down { font-size: 14px; color: var(--silver); transition: rotate .2s; }
+  :is(.leader, #boards) details[open] .ph-caret-down { rotate: 180deg; }
+  .objs { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 12px; padding: 8px 0 4px 52px; font: 400 12px var(--mono); color: var(--silver); }
+  .objs b { grid-column: 1 / -1; margin-top: 4px; font: 600 12px var(--sans); color: var(--bone); }
+  .objs b:first-child { margin-top: 0; }
+  .leader { overflow-y: auto; }
 
   /* how to play */
   .howto { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; border: 0; padding: 16px; background: transparent; color: inherit; display: grid; place-items: center; }
@@ -403,15 +421,17 @@
     .rivals { min-width: 0; }
     .rivals .lane { grid-template-columns: 22px minmax(0, 1fr) 50px 4ch; }
     .slot { width: 46px; height: 46px; }
-    /* a phone: the tray takes the full width and Confirm sits under it, named, within the thumb's reach */
+    /* a phone: the tray takes the full width, Hint and Confirm sit under it, named, within the thumb's reach */
     .botbar { flex-wrap: wrap; gap: 8px; }
-    .inv { max-width: none; flex: 1 1 100%; margin: 0; }
-    #confirm { flex: 1 1 100%; justify-content: center; }
+    .inv { max-width: none; flex: 1 1 100%; margin: 0; order: 1; }
+    #showme { order: 2; }
+    #confirm { flex: 1 1 0; justify-content: center; order: 3; }
     #confirm kbd { display: none; }
     .hint { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 150px); }
     body:has(#card.on) .topbar .right { display: none; } /* the result card has the time; the timer column would sit on it */
     .howto ol { grid-template-columns: 1fr 1fr; }
     .objcard b { font-size: 16px; }
+    .row .link { flex-basis: 100%; } /* the room link gets the card's width, so its code shows; Copy link goes under it */
   }
   /* a phone, or any short screen: the credits follow the menu instead of sitting in the corner, and the title tightens */
   @media (max-width: 1080px), (max-height: 500px) { .credits { position: static; max-width: 52ch; margin-top: 14px; text-align: left; font-size: 12px; } }
@@ -443,6 +463,7 @@
 <p class="hint" id="hint"></p>
 <ul class="toasts" id="toasts" aria-live="polite"></ul>
 <footer class="botbar" id="botbar" hidden>
+  <button class="btn" id="showme" type="button" disabled><i class="ph ph-eye"></i><span>Hint</span><small id="hintLeft">1 left</small></button>
   <div class="inv panel" id="pips"></div>
   <button class="btn go" id="confirm" type="button" aria-label="Confirm" hidden disabled><i class="ph ph-check-circle"></i><span>Confirm</span><kbd>Enter</kbd></button>
 </footer>
@@ -456,6 +477,7 @@
     <button class="btn go" id="host" type="button"><i class="ph-fill ph-users-three"></i>Race friends</button>
     <button class="btn" id="solo" type="button"><i class="ph-fill ph-play"></i>Practice alone</button>
     <button class="btn" id="howbtn" type="button"><i class="ph ph-book-open"></i>How to play</button>
+    <button class="btn" id="boardbtn" type="button" hidden><i class="ph-fill ph-trophy"></i>Top players</button>
     <a class="btn" id="fakebtn" href="" hidden><i class="ph ph-cube"></i>Play a forged fake</a>
   </div>
   <footer class="credits" id="credits" hidden>
@@ -475,7 +497,7 @@
   <div class="panel">
     <h2 id="howtoTitle"><span class="logo" data-logo></span>How to play</h2>
     <ol>
-      <li><i class="ph ph-eye"></i><b>Study it</b><span>The object works once and holds still. Every 15 seconds it flashes up whole again.</span></li>
+      <li><i class="ph ph-eye"></i><b>Study it</b><span>The object works once and holds still. Every 15 seconds it flashes up whole again, and Hint shows it once an object, for 1.5 seconds.</span></li>
       <li><i class="ph ph-hand-grabbing"></i><b>Rebuild it</b><span>Its parts land in the tray. Drag each one back where it goes.</span></li>
       <li><i class="ph ph-arrow-counter-clockwise"></i><b>Turn it</b><span id="howturn">One part arrives turned, two from Level 4. Double-tap it, or press R over it, to turn it back.</span></li>
       <li><i class="ph ph-check-circle"></i><b>Confirm</b><span>Right parts lock in. Wrong ones fly back and cost 3 seconds.</span></li>
@@ -484,6 +506,14 @@
       <li><i class="ph ph-flag-checkered"></i><b>Climb the levels</b><span>Alone, rebuild 3 objects of a level to open the next. Six levels, more to put back each time.</span></li>
     </ol>
     <div class="row"><button class="btn go" id="howclose" type="button" autofocus><i class="ph ph-check"></i>Got it</button></div>
+  </div>
+</dialog>
+<dialog class="howto join" id="boards" aria-labelledby="boardsTitle">
+  <div class="panel">
+    <h2 id="boardsTitle"><i class="ph-fill ph-trophy"></i>Top players</h2>
+    <ol id="boardsList"></ol>
+    <p>Levels from real finished runs, kept on the server</p>
+    <div class="row"><button class="btn go" id="boardsclose" type="button" autofocus><i class="ph ph-check"></i>Close</button></div>
   </div>
 </dialog>
 <dialog class="howto join" id="join" aria-labelledby="joinTitle">
@@ -1197,7 +1227,7 @@ async function forgeIt(resume = false) {
 // ---------- a round ----------
 // state: title | lobby | intro | race | done
 let fooledOnce = false;
-let state = "title", t0 = 0, penalty = 0, misses = 0, checks = 0, held = null, events = [], doneAt = 0, myTime = null, roundId = 0;
+let state = "title", t0 = 0, penalty = 0, misses = 0, hintUsed = false, checks = 0, held = null, events = [], doneAt = 0, myTime = null, roundId = 0;
 const RACE_IN = 3500; // ms from a round's start to its race clock; a room uses the same figure (src/room.js)
 const PENALTY = 3; // seconds for each part that is in the wrong place when you confirm
 const lockedCount = () => loose.filter(p => p.placed).length;
@@ -1214,6 +1244,7 @@ function count() {
   for (const p of tray()) if (p.slotEl) p.slotEl.className = "slot" + (p.placed ? " on" : p.moved ? " set" : "");
   if ($("invn")) $("invn").textContent = `${lockedCount()}/${loose.length}`;
   $("confirm").disabled = !(state === "race" && movedCount() === loose.length && !held && !checking && !peeking);
+  $("showme").disabled = !(state === "race" && !hintUsed && !checking && !peeking && loose.some(p => !p.placed));
 }
 function clock() {
   if (state !== "race" && state !== "done" && state !== "operate") return;
@@ -1300,7 +1331,8 @@ async function round(name, raceAt = null) {
   $("count").textContent = `${loose.length} parts to put back`;
   banner(OBJECTS[name], ROOM && room ? `Object ${room.round + 1} of ${room.objects.length}` : `${name === "pump" && !Object.keys(done).length ? "Warm-up" : `Level ${levelOf(name)}`} · ${loose.length} parts to put back`);
   hint("");
-  penalty = 0; misses = 0; checks = 0; events = []; myTime = null; fooledOnce = false;
+  penalty = 0; misses = 0; hintUsed = false; checks = 0; events = []; myTime = null; fooledOnce = false;
+  $("hintLeft").textContent = "1 left";
   if (rejoined) { try { const k = JSON.parse(sessionStorage.getItem("hh-race") || "{}"); if (k.at === room?.startAt) ({ penalty, misses } = k); } catch {} } // penalties earned before a reload still count
   // the teardown: all parts leave together, a few ms apart, and are in the tray when the clock starts
   const GAP = 40, OUT = 450, ACROSS = 600, TD = GAP * (loose.length - 1) + OUT + ACROSS;
@@ -1413,8 +1445,16 @@ async function judge() {
 
 // Every 15 s of a race the finished object flashes up for a second: the parts still out fly to their places, the right
 // way round, and back to where they were. The stray part stays out. Confirm waits while it shows.
-const PEEK_EVERY = 15000, PEEK_FOR = 1000;
-async function peek() {
+const PEEK_EVERY = 15000, PEEK_FOR = 1000, HINT_FOR = 1500;
+// Hint: once an object, the finished object for 1.5 s on demand; the next automatic flash then waits its full 15 s
+$("showme").onclick = () => {
+  if ($("showme").disabled) return;
+  hintUsed = true;
+  $("hintLeft").textContent = "used";
+  nextPeek = performance.now() - t0 + PEEK_EVERY;
+  peek(HINT_FOR);
+};
+async function peek(hold = PEEK_FOR) {
   const id = roundId, out = loose.filter(p => !p.placed && !p.busy && p !== held?.p);
   if (!out.length) return;
   const was = out.map(p => ({ c: centreOf(p), s: p.scale, q: p.node.quaternion.clone() }));
@@ -1427,7 +1467,7 @@ async function peek() {
   for (const p of out) p.busy = true;
   count();
   await tween(220, go(was, home), ease.inOut);
-  await new Promise(r => setTimeout(r, PEEK_FOR)); // not wait(): with reduced motion the parts jump, but still stay up
+  await new Promise(r => setTimeout(r, hold)); // not wait(): with reduced motion the parts jump, but still stay up
   await tween(220, go(home, was), ease.inOut);
   for (const p of out) p.busy = false;
   peeking = false;
@@ -1876,9 +1916,17 @@ function slide(to, ms = 700) {
 // Wide, the object on show sits to the right of the title (about 0.36 of the height either side of its centre), its
 // caption above it, moved over and shrunk only when the title would be under it. Upright, it fills the space between
 // the corner buttons and the title block, shrunk on a short phone, its caption just above the title. Needs the title
-// laid out.
+// laid out. In a room's lobby the room card takes the title's place: on the right of a wide screen (the object takes
+// the space left of it), else at the foot (the object sits above it).
 function titleShift() {
-  if (W > H * 1.1) {
+  const lobby = state === "lobby", card = $("card");
+  if (lobby && matchMedia("(min-width: 1000px)").matches) {
+    const left = card.getBoundingClientRect().left, c = left / 2, k = Math.min(1, (left - 32) / (0.72 * H));
+    turn.scale.setScalar(k);
+    Object.assign($("poke").style, { left: `${c}px`, right: "auto", top: "8%", bottom: "auto", translate: "-50% 0", textAlign: "center", display: H < 520 ? "none" : "" });
+    return { x: c / W - 0.5, y: 0.02 };
+  }
+  if (!lobby && W > H * 1.1) {
     const right = Math.max(...[".title h1", ".title > p"].map(q => document.querySelector(q).getBoundingClientRect().right)) + 16;
     let k = 1, c = 0.7 * W;
     if (c - 0.36 * H < right) { k = Math.min(1, (W - 16 - right) / (0.72 * H)); c = right + 0.36 * H * k; }
@@ -1886,12 +1934,12 @@ function titleShift() {
     Object.assign($("poke").style, { left: `${c}px`, right: "auto", top: "8%", bottom: "auto", translate: "-50% 0", textAlign: "center", display: H < 520 ? "none" : "" }); // above it: a tall object reaches low; a short screen has no room for it
     return { x: c / W - 0.5, y: 0.02 };
   }
-  const top = 64, bottom = $("title").getBoundingClientRect().top;
-  turn.scale.setScalar(THREE.MathUtils.clamp((bottom - top) / (0.9 * W), 0.5, 1));
-  Object.assign($("poke").style, { left: "", right: "", top: "", translate: "", textAlign: "", display: "", bottom: W <= 760 ? `${H - bottom + 8}px` : "" });
+  const top = 64, bottom = lobby ? card.offsetTop : $("title").getBoundingClientRect().top; // (offsetTop: the card's slide-in transform aside)
+  turn.scale.setScalar(THREE.MathUtils.clamp((bottom - top) / (0.9 * W), lobby ? 0.3 : 0.5, 1)); // a room card is tall: the object shrinks to stay above it
+  Object.assign($("poke").style, { left: "", right: "", top: "", translate: "", textAlign: "", display: lobby && bottom - top < 220 ? "none" : "", bottom: W <= 760 ? `${H - bottom + 8}px` : "" });
   return { x: 0, y: (H / 2 - (top + bottom) / 2) / H };
 }
-const refit = () => { if (state === "title") { slide(titleShift(), 0); fitBoard(); } };
+const refit = () => { if (state === "title") { slide(titleShift(), 0); fitBoard(); } else if (state === "lobby" && $("card").classList.contains("on")) slide(titleShift(), 0); };
 addEventListener("resize", refit);
 document.fonts?.ready.then(refit); // a late display font changes the title's size
 
@@ -2037,19 +2085,30 @@ async function leaderboard() {
   const list = await (boardP ?? getBoard());
   boardP = null; // later visits to the landing ask again
   boardHtml = list.length
-    ? list.slice(0, 6).map((p, i) => `<li><span class="rank">${i + 1}</span>${avatarOf(p.name)}<span><b>${esc(p.name)}</b><small>${p.cleared ? `${p.cleared} ${p.cleared === 1 ? "level" : "levels"} in ${p.total.toFixed(1)} s` : `${p.now} of ${CLEAR} in level 1`}</small></span><span class="t">${p.cleared >= LEVELS ? "All levels" : `Level ${p.cleared + 1}`}</span></li>`).join("")
+    ? list.slice(0, 6).map((p, i) => `<li><details><summary><span class="rank">${i + 1}</span>${avatarOf(p.name)}<span><b>${esc(p.name)}</b><small>${p.cleared ? `${p.cleared} ${p.cleared === 1 ? "level" : "levels"} in ${p.total.toFixed(1)} s` : `${p.now} of ${CLEAR} in level 1`}</small></span><span class="t">${p.cleared >= LEVELS ? "All levels" : `Level ${p.cleared + 1}`}<i class="ph ph-caret-down"></i></span></summary>${timesOf(p.best)}</details></li>`).join("")
     : `<li><span></span><i class="ph ph-flag-checkered"></i><span>No players yet. Finish a rebuild to join the board.</span><span></span></li>`;
   fitBoard();
+}
+// a player's times behind their standing, by level: each cleared level's 3 fastest objects, then the next level's
+function timesOf(best = {}) {
+  const by = {};
+  for (const [id, t] of Object.entries(best)) (by[levelOf(id)] ??= []).push([id, t]);
+  return `<div class="objs">${Object.keys(by).sort((a, b) => a - b).map(l => `<b>Level ${l}</b>${by[l].sort((a, b) => a[1] - b[1]).map(([id, t]) => `<span>${esc(OBJECTS[id] ?? id)}</span><span>${t.toFixed(1)} s</span>`).join("")}`).join("")}</div>`;
 }
 // as many records as fit above the title's badge; none fits, no board
 let boardHtml = "";
 function fitBoard() {
   const list = $("leaderList"), limit = $("title").getBoundingClientRect().top - 12; // (the title box itself does not move on entrance)
   list.innerHTML = boardHtml;
-  $("leader").style.display = "";
+  $("leader").style.display = $("leader").style.maxHeight = "";
   while (list.children.length > 1 && $("leader").getBoundingClientRect().bottom > limit) list.lastChild.remove();
   if ($("leader").getBoundingClientRect().bottom > limit) $("leader").style.display = "none";
+  else $("leader").style.maxHeight = `${limit - $("leader").getBoundingClientRect().top}px`; // a player opened for their times scrolls inside
+  $("boardbtn").hidden = getComputedStyle($("leader")).display !== "none"; // no room for the board (a phone, a short screen): a button opens it
 }
+$("boardbtn").onclick = () => { $("boardsList").innerHTML = boardHtml; $("boards").showModal(); };
+$("boardsclose").onclick = () => $("boards").close();
+$("boards").onclick = e => { if (e.target === $("boards")) $("boards").close(); }; // (returning false would cancel a row's opening)
 // How to play: from the title, from the help button, any time
 let howFrom = null;
 // (a modal dialog: it keeps focus inside, Escape closes it, and focus goes back where it was)
@@ -2176,7 +2235,7 @@ function ui() {
     $("leader").hidden = true;
     $("poke").hidden = false;
     cv.className = "grab";
-    const url = `${location.origin}${location.pathname}?room=${ROOM}`;
+    const url = `${location.host}${location.pathname}?room=${ROOM}`; // shown without https:// (Copy link builds the full one)
     const typing = document.activeElement?.id === "who" ? $("who").value : null; // a new player list must not eat a name being typed
     card(`<h2 class="chakra">Room ${ROOM}</h2>
       <div class="row" style="margin-top:14px"><input class="link" id="url" readonly value="${esc(url)}" aria-label="Room link">
@@ -2189,6 +2248,8 @@ function ui() {
     if (typing != null) { who.value = typing; who.focus({ preventScroll: true }); }
     who.onchange = () => rename(who.value);
     who.onkeydown = e => e.key === "Enter" && who.blur();
+    $("url").scrollLeft = 1e4; // a narrow card cuts the start of the link, not the room code
+    refit(); // the card's height changes with the players: the object keeps clear of it
     return;
   }
   if (room.phase === "race") {
@@ -2240,7 +2301,7 @@ renderer.setAnimationLoop(now => {
   if (fxQuad.visible) { // the extras' light follows the stage's centre and size on screen
     const u = fxQuad.material.uniforms, dpr = renderer.getPixelRatio(), c = new THREE.Vector3().setFromMatrixPosition(turn.matrixWorld).project(camera);
     u.uC.value.set((c.x + 1) / 2 * W * dpr, (c.y + 1) / 2 * H * dpr);
-    u.uR.value = 0.4 * Math.min(W, H) * dpr;
+    u.uR.value = 0.4 * Math.min(W, H) * turn.scale.x * dpr; // round the object: a phone's smaller object gets a smaller ring
     if (!still.matches) u.uTime.value = now / 1000;
     const dt = Math.min(0.25, (now - (fxQuad.last ?? now)) / 1000);
     fxQuad.last = now;

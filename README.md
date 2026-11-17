@@ -14,7 +14,7 @@ Built for the Manycore Aholo Global 3D AI Hackathon. Every object you rebuild wa
 
 1. An object turns into view and works once, with its own sound: a stapler's arm snaps, a padlock's key turns and its shackle lifts, a crank ratchets. About 3.5 seconds after the object appears, its parts are in the tray and the clock starts.
 2. It comes apart, and its parts land in a tray around the base.
-3. Drag each part back where it belongs. Nothing snaps into place; when you think it's right, press Confirm. Right parts lock in. Wrong ones fly back to the tray at +3 s each. A part you leave in the tray, or drop back on its place there, costs nothing. Every 15 seconds the finished object flashes up for a second, so you can check where the parts go.
+3. Drag each part back where it belongs. Nothing snaps into place; when you think it's right, press Confirm. Right parts lock in. Wrong ones fly back to the tray at +3 s each. A part you leave in the tray, or drop back on its place there, costs nothing. Every 15 seconds the finished object flashes up for a second, so you can check where the parts go, and Hint shows it once an object for 1.5 seconds.
 4. One part in the tray is a decoy: a part of similar shape and size taken from a different object. From Level 2 it takes on the colour of the part it imitates, so you have to spot it by its shape. Leave it out. The result says where it came from. (If its object hasn't loaded when the parts come apart, the round goes ahead without one.)
 5. A long part arrives a quarter turn round (two from Level 4, on objects with two long parts; objects with no long part have none). Double-tap it, or press R with the pointer on it, and it turns straight back. Confirm tells you when a part is in place but turned.
 ![The padlock rebuilt, its key half turned along the guide, the hint reading "Turn the key (1 of 2)"](docs/operate.jpg)
@@ -32,7 +32,7 @@ Built for the Manycore Aholo Global 3D AI Hackathon. Every object you rebuild wa
 
 **Forge a fake.** After a round alone you can forge a fake part for a friend. Pick the real part it stands in for and describe your fake in a few words. Lux3D makes it from your words and the object's name while you wait (G1-Turbo text-to-3D at 10,000 faces, about 2 minutes), and your challenge link hides it in your friend's tray in place of the usual decoy, sized like the part you picked. Their result names you and quotes your words, and says whether it fooled them. Once the forge has closed, the landing and every result offer a fake the game's maker forged before then (a pliers handle and a pair of scissors), so the idea can still be played.
 
-**Join with a name.** A new browser picks a name before its first game. There is no account: the browser keeps the name and a random id, and every run carries both. The landing's board ranks players by levels cleared, then progress in the next level, then the total of their 3 fastest rebuilds in each cleared level.
+**Join with a name.** A new browser picks a name before its first game. There is no account: the browser keeps the name and a random id, and every run carries both. The landing's board ranks players by levels cleared, then progress in the next level, then the total of their 3 fastest rebuilds in each cleared level. Tap a player to see the object times behind it. Where the screen has no room for the board, a Top players button opens it.
 
 ![The podium at the end of a room match, played with test players](docs/podium.jpg)
 
