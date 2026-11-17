@@ -1,0 +1,65 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Part-split check</title>
+<style>
+  body { margin: 0; background: #1b1d22; color: #ddd; font: 14px system-ui; }
+  #ui { position: fixed; left: 12px; top: 12px; display: flex; gap: 12px; align-items: center; }
+  canvas { display: block; }
+</style>
+<div id="ui">
+  <label>Explode <input id="ex" type="range" min="0" max="3" step="0.01" value="0"></label>
+  <label><input id="tint" type="checkbox"> Tint parts</label>
+  <label><input id="back" type="checkbox" checked> Show inside (red)</label>
+  <span id="info"></span>
+</div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+const file = new URLSearchParams(location.search).get("f") || "out/clipper-split.glb";
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(devicePixelRatio);
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+document.body.append(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1b1d22);
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment()).texture;
+const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.001, 10);
+const controls = new OrbitControls(camera, renderer.domElement);
+
+const gltf = await new GLTFLoader().loadAsync(file);
+const root = gltf.scene;
+scene.add(root);
+const box = new THREE.Box3().setFromObject(root), centre = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3()).length();
+camera.position.copy(centre).add(new THREE.Vector3(0.6, 0.5, 0.9).multiplyScalar(size * 1.3));
+controls.target.copy(centre);
+
+const COLORS = [0xe4572e, 0x29a19c, 0xf3a712, 0x7b5ea7, 0x4c86d6, 0x9bc53d, 0xd7263d, 0x8d6a9f];
+const parts = [];
+const meshes = [];
+root.traverse((m) => m.isMesh && meshes.push(m));
+meshes.forEach((m) => {
+  const c = new THREE.Box3().setFromObject(m).getCenter(new THREE.Vector3());
+  const inside = new THREE.Mesh(m.geometry, new THREE.MeshBasicMaterial({ color: 0xff2020, side: THREE.BackSide }));
+  m.add(inside);
+  parts.push({ m, home: m.position.clone(), dir: c.clone().sub(centre), mat: m.material, tint: new THREE.MeshStandardMaterial({ color: COLORS[parts.length % COLORS.length], roughness: 0.6 }), inside });
+});
+document.getElementById("info").textContent = `${parts.length} parts`;
+const ex = document.getElementById("ex"), tint = document.getElementById("tint"), back = document.getElementById("back");
+function apply() {
+  for (const p of parts) {
+    p.m.position.copy(p.home).addScaledVector(p.dir, +ex.value);
+    p.m.material = tint.checked ? p.tint : p.mat;
+    p.inside.visible = back.checked;
+  }
+}
+for (const el of [ex, tint, back]) el.addEventListener("input", apply);
+window.view = (x, y, z, e = 0, t = false) => { camera.position.copy(centre).add(new THREE.Vector3(x, y, z).normalize().multiplyScalar(size * 1.9)); controls.target.copy(centre); ex.value = e; tint.checked = t; apply(); };
+window.parts = parts;
+window.scene = scene;
+renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+</script>

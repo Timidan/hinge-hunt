@@ -1,7 +1,7 @@
-"""Shrink the textures in a Lux3D result ZIP: python3 -I slim.py in.zip out.zip
+"""Shrink the textures in a Lux3D result ZIP or GLB: python3 -I slim.py in.zip|in.glb out.zip|out.glb
 Images go to at most 1024 px; JPEG unless a material actually uses alpha. Geometry, paths and filenames stay identical,
 so stored crowd taps still line up."""
-import io, json, struct, sys, zipfile
+import io, json, pathlib, struct, sys, zipfile
 from PIL import Image
 
 MAX = 1024
@@ -42,6 +42,8 @@ def slim_glb(b):
 
 
 def main(src, dst):
+    if src.endswith(".glb"):
+        return pathlib.Path(dst).write_bytes(slim_glb(pathlib.Path(src).read_bytes()))
     with zipfile.ZipFile(src) as zin, zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) as zout:
         for info in zin.infolist():
             data = zin.read(info)

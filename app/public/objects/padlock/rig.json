@@ -1,0 +1,91 @@
+{
+ "root": "body",
+ "joints": [
+  {
+   "name": "shackle_joint",
+   "type": "prismatic",
+   "parent": "body",
+   "child": "shackle",
+   "origin": [
+    3.5e-05,
+    0.0184,
+    -0.007665
+   ],
+   "axis": [
+    0.0,
+    1.0,
+    0.0
+   ],
+   "lower": 0.0,
+   "upper": 0.015
+  },
+  {
+   "name": "key_and_cylinder_joint",
+   "type": "revolute",
+   "parent": "body",
+   "child": "key_and_cylinder",
+   "origin": [
+    -2e-06,
+    -0.021732,
+    -7.3e-05
+   ],
+   "axis": [
+    0.0,
+    0.0,
+    1.0
+   ],
+   "lower": -1.57,
+   "upper": 1.57
+  }
+ ],
+ "parts": [
+  {
+   "i": 0,
+   "link": "shackle",
+   "share": 0.907,
+   "fit": 5e-06,
+   "centre": [
+    4e-05,
+    0.01733,
+    -0.00763
+   ],
+   "size": [
+    0.04262,
+    0.03034,
+    0.00946
+   ]
+  },
+  {
+   "i": 1,
+   "link": "body",
+   "share": 0.824,
+   "fit": 2e-06,
+   "centre": [
+    0.0,
+    -0.01499,
+    -0.00898
+   ],
+   "size": [
+    0.04971,
+    0.03501,
+    0.02267
+   ]
+  },
+  {
+   "i": 2,
+   "link": "key_and_cylinder",
+   "share": 1.0,
+   "fit": 2e-06,
+   "centre": [
+    2e-05,
+    -0.02214,
+    0.00837
+   ],
+   "size": [
+    0.00431,
+    0.01739,
+    0.02389
+   ]
+  }
+ ]
+}

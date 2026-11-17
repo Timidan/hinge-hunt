@@ -1,0 +1,73 @@
+{
+ "root": "fixed_half",
+ "joints": [
+  {
+   "name": "movable_half_joint",
+   "type": "revolute",
+   "parent": "fixed_half",
+   "child": "movable_half",
+   "origin": [
+    0.0194,
+    -0.0106,
+    0.0
+   ],
+   "axis": [
+    0.0,
+    0.0,
+    1.0
+   ],
+   "lower": -0.523599,
+   "upper": 0.0
+  }
+ ],
+ "parts": [
+  {
+   "i": 0,
+   "link": "fixed_half",
+   "share": 1.0,
+   "fit": 0.0,
+   "centre": [
+    0.0519,
+    0.02307,
+    -1e-05
+   ],
+   "size": [
+    0.0829,
+    0.04556,
+    0.01368
+   ]
+  },
+  {
+   "i": 1,
+   "link": "fixed_half",
+   "share": 0.996,
+   "fit": 0.0,
+   "centre": [
+    -0.04264,
+    -0.00211,
+    0.0
+   ],
+   "size": [
+    0.12471,
+    0.02911,
+    0.01729
+   ]
+  },
+  {
+   "i": 2,
+   "link": "movable_half",
+   "share": 0.974,
+   "fit": 0.0,
+   "centre": [
+    0.05771,
+    -0.02512,
+    0.0
+   ],
+   "size": [
+    0.09458,
+    0.04145,
+    0.01306
+   ]
+  }
+ ]
+}

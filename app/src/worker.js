@@ -1,164 +1,180 @@
-// Hinge Hunt API. Rounds live in KV: round:<id> (JSON), file:<id>:zip, guesses:<id>.
-// Pipeline per round: photo -> Aholo asset store -> Lux3D G1-Turbo img-to-3D -> Lux3D articulation -> ZIP copied into KV
-// (Aholo result links expire after 2 h) -> uploader confirms -> live.
-const API = "https://api.aholo.ai/global/lux3d/v1";
+export { Room } from "./room.js";
+import POOL from "../public/objects/index.json";
+// Hinge Hunt API: recorded runs and race rooms. The objects themselves are static files made ahead of time with Lux3D.
 const json = (body, status = 200) => Response.json(body, { status });
-const id = () => crypto.randomUUID().replace(/-/g, "").slice(0, 10);
 
-async function lux(env, method, path, body) {
-  const r = await fetch(API + path, {
-    method,
-    headers: { Authorization: env.AHOLO_API_KEY, "Content-Type": "application/json" },
-    body: body && JSON.stringify(body),
-  });
-  return r.json();
-}
+// Recorded runs: the 20 fastest finished races per object are kept, so a player alone races a real earlier run.
+// ponytail: an object's list is read, changed and written back, so two finishes of one object in the same moment can
+// keep only one; a Durable Object per object would serialise them if that ever matters.
+// A run is its time and the moments its confirms locked parts in; nothing here is made up.
+const KEEP_RUNS = 20;
+// The rules version: runs kept under the rules before objects were worked by hand and parts arrived turned (16 Nov 2026)
+// stay in KV under runs:<object> and records, but are not mixed with runs under the current rules.
+const RUNS = "runs2";
+const PENALTY = 3; // seconds per wrong part, as in the page
 
-// Task status 3 = success, 4 = failed, 6 = cancelled.
-async function task(env, taskId) {
-  const d = (await lux(env, "GET", `/generate/task/get?taskid=${taskId}`)).d || {};
-  return { status: d.status, url: d.outputs?.[0]?.content };
-}
-
-// Lux3D can't fetch from workers.dev (tested 2026-11-13), so photos go into Aholo's own asset store first.
-async function uploadPhoto(env, photo) {
-  const tok = await (await fetch("https://api.aholo.ai/global/asset/v1/token", { headers: { Authorization: env.AHOLO_API_KEY } })).json();
-  const { ousToken, globalDomain } = tok.d || tok;
-  const md5 = [...new Uint8Array(await crypto.subtle.digest("MD5", photo))].map(b => b.toString(16).padStart(2, "0")).join("");
-  const form = new FormData();
-  form.append("md5", md5);
-  form.append("file", new Blob([photo], { type: "image/jpeg" }), "photo.jpg");
-  const headers = { "ous-token-v2": ousToken };
-  const up = await (await fetch(`${globalDomain}/ous/api/v2/single/upload`, { method: "POST", headers, body: form })).json();
-  if (up.c !== "0") return null;
-  for (let i = 0; i < 20; i++) {
-    const st = (await (await fetch(`${globalDomain}/ous/api/v2/upload/status`, { headers })).json()).d || {};
-    if (st.status === 5) return st.url;
-    if (st.status === 6 || st.status === 8) return null;
-    await new Promise(ok => setTimeout(ok, 300));
+// Players: a browser joins with a name and keeps a random id. Each of its runs counts toward its levels: the objects are
+// in six levels (objects/index.json), and a level is cleared by rebuilding 3 of its objects, in order from Level 1.
+// The board ranks players by levels cleared, then progress in the next one, then the total of their 3 fastest
+// rebuilds in each cleared level. Ids never leave the server.
+const LEVELS = 6, CLEAR = 3;
+function standing(done) {
+  let cleared = 0, total = 0;
+  for (let l = 1; l <= LEVELS; l++) {
+    const t = POOL.filter(o => o.level === l && done[o.id] != null).map(o => done[o.id]).sort((a, b) => a - b);
+    if (t.length < CLEAR) return { cleared, now: t.length, total: Math.round(total * 10) / 10 };
+    cleared = l; total += t[0] + t[1] + t[2];
   }
-  return null;
+  return { cleared, now: 0, total: Math.round(total * 10) / 10 };
+}
+const ahead = (a, b) => b.cleared - a.cleared || b.now - a.now || a.total - b.total;
+async function credit(env, id, name, object, time) {
+  const key = `player:${id}`, p = (await env.KV.get(key, "json")) || { done: {} };
+  if (p.name === name && p.done[object] <= time) return; // nothing new: a slower rebuild of an object already counted
+  p.name = name;
+  p.done[object] = Math.min(p.done[object] ?? Infinity, time);
+  // the standing rides on the player's own record, so two finishes at once can't overwrite each other on a shared list
+  await env.KV.put(key, JSON.stringify(p), { metadata: { name, ...standing(p.done) } });
+  boardKept = null;
+}
+// Every landing asks for the board, and KV allows only so many lists a day, so each Worker instance keeps the board
+// for 30 s; a run credited on the same instance clears it. (KV's list can still lag a new finish by up to a minute.)
+let boardKept = null, boardAt = 0;
+async function board(env) {
+  if (boardKept && Date.now() - boardAt < 30000) return boardKept;
+  // ponytail: one page of 1,000 players; follow the cursor if it ever grows past that
+  const { keys } = await env.KV.list({ prefix: "player:" });
+  boardAt = Date.now();
+  return (boardKept = keys.map(k => k.metadata).filter(Boolean).sort(ahead).slice(0, 20));
+}
+async function runs(req, env, object) {
+  const o = POOL.find(o => o.id === object);
+  if (!o) return json({ error: "No such object." }, 404);
+  const key = `${RUNS}:${object}`, list = (await env.KV.get(key, "json")) || [];
+  if (req.method === "GET") return json(list);
+  if (req.method !== "POST") return json({ error: "Not found." }, 404);
+  let b;
+  try { b = await req.json(); } catch { return json({ error: "Send JSON." }, 400); }
+  const time = Math.round(+b.time * 10) / 10, parts = b.parts | 0, misses = b.misses | 0;
+  const checks = Array.isArray(b.checks) ? b.checks.slice(-60).map(c => (Array.isArray(c) ? [Math.round(+c[0]), c[1] | 0] : [NaN, 0])) : [];
+  const last = checks.at(-1);
+  // A run has to add up: this object's part count, confirms in time order that never lose a part, the last one
+  // locking every part in, a time no sooner than that confirm plus 3 s per wrong part, and no faster than half a
+  // second per part. Times are measured by the player's page, so this stops impossible runs, not a careful forger.
+  const adds = parts === o.parts && misses >= 0 && misses <= 500 && last
+    && checks.every(([t, n], i) => t >= 0 && n >= 0 && n <= parts && (!i || (t >= checks[i - 1][0] && n >= checks[i - 1][1])))
+    && last[1] === parts && time <= 600 && time >= Math.max(1, 0.5 * parts) && time >= last[0] / 1000 + PENALTY * misses - 0.15;
+  if (!adds) return json({ error: "That run does not add up." }, 400);
+  const run = { name: String(b.name ?? "").replace(/\s+/g, " ").trim().slice(0, 16) || "Player", time, misses, parts, checks, at: Date.now() };
+  const next = [...list, run].sort((x, y) => x.time - y.time).slice(0, KEEP_RUNS);
+  if (next.includes(run)) await env.KV.put(key, JSON.stringify(next));
+  if (/^[a-z0-9]{8,16}$/.test(b.player || "")) await credit(env, b.player, run.name, object, time);
+  return json({ ok: true, rank: next.indexOf(run) + 1, at: run.at });
 }
 
-const getRound = (env, rid) => env.KV.get(`round:${rid}`, "json");
-const putRound = (env, r) => env.KV.put(`round:${r.id}`, JSON.stringify(r));
-const view = r => ({ id: r.id, name: r.name, status: r.status, error: r.error, created: r.created, ready: r.ready, flip: !!r.flip });
+// ---------- forged fakes ----------
+// A player describes a fake part. Lux3D G1-Turbo text-to-3D makes it (10,000 faces, about 2 minutes) and it hides in a
+// friend's tray in place of the stock decoy. The Lux3D key is a Worker secret and never reaches the page. Lux3D's model
+// is about 11 MB, nearly all of it two 2048 px textures, so the forger's page fetches it through here, shrinks the
+// textures and sends back a file of about 0.7 MB, which KV keeps (Lux3D's links last 2 hours). The hackathon's credits
+// end on 19 Nov 2026 at 15:59 UTC; after that, or with no key, forging is closed, and fakes already made keep playing.
+const LUX = "https://api.aholo.ai/global/lux3d/v1";
+const FORGE_ENDS = Date.UTC(2026, 10, 19, 15, 59);
+// one player's fakes a day; one connection's (a player id is the caller's to make up); all fakes. A fake costs about
+// 17 credits (16 Nov 2026: 1,961 -> 1,909 over three), so 50 fakes spend about 850 and leave about 1,050 spare.
+// KV counters are not atomic, so a burst can go a little over.
+const FORGE_PER_DAY = 5, FORGE_PER_IP = 10, FORGE_CAP = 50;
+const forgeOpen = env => !!env.AHOLO_API_KEY && Date.now() < FORGE_ENDS;
+const lux = (env, path, body) => fetch(LUX + path, {
+  method: body ? "POST" : "GET", body: body && JSON.stringify(body),
+  headers: { Authorization: env.AHOLO_API_KEY, "Content-Type": "application/json" },
+}).then(r => r.json());
+const pub = ({ task, player, src, ...f }) => f; // what the page sees
+const nameOf = v => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, 16) || "Player";
 
-async function create(req, env) {
-  if (req.headers.get("content-type") !== "image/jpeg") return json({ error: "Send a JPEG photo." }, 415);
-  const count = +(await env.KV.get("count:created")) || 0;
-  if (count >= +env.MAX_ROUNDS) return json({ error: "New rounds are closed: this demo has used its Lux3D credits. The existing rounds still play." }, 429);
-  const photo = await req.arrayBuffer();
-  if (photo.byteLength > 5e6) return json({ error: "Photo is over 5 MB." }, 413);
-  const img = await uploadPhoto(env, photo);
-  if (!img) return json({ error: "The photo upload to Aholo failed. Try again." }, 502);
-  const made = await lux(env, "POST", "/generate/img-to-3d/task/create", { img, version: "G1-Turbo", outputFormat: ["glb"], faceCount: 50000 });
-  if (made.c !== "0") return json({ error: "Lux3D is busy (3 jobs at once). Try again in a few minutes." }, 503);
-  const r = { id: id(), secret: id() + id(), status: "mesh", created: Date.now(), meshTask: made.d };
-  await env.KV.put("count:created", String(count + 1));
-  await putRound(env, r);
-  return json({ id: r.id, secret: r.secret });
-}
-
-// Moves the pipeline one step. Only the uploader's polling (with the secret) advances it,
-// so a public viewer can never start a second paid articulation task.
-// ponytail: two uploader tabs polling at once could double-start articulation; add a KV lock if that shows up.
-async function advance(env, r) {
-  if (r.status === "mesh") {
-    const t = await task(env, r.meshTask);
-    if (t.status === 3) {
-      const made = await lux(env, "POST", "/articulation-animation/task/create", { glbUrl: t.url, prompt: "open it fully" });
-      if (made.c !== "0") return r; // busy: retry on next poll
-      Object.assign(r, { status: "mechanism", artTask: made.d });
-    } else if (t.status === 4 || t.status === 6) Object.assign(r, { status: "failed", error: "Lux3D could not build a 3D model from this photo." });
-  } else if (r.status === "mechanism") {
-    const t = await task(env, r.artTask);
-    if (t.status === 3) {
-      await putZip(env, r.id, await (await fetch(t.url)).arrayBuffer());
-      Object.assign(r, { status: "review", ready: Date.now() });
-    } else if (t.status === 4 || t.status === 6) Object.assign(r, { status: "failed", error: "Lux3D could not find a moving part in this object." });
-  } else return r;
-  await putRound(env, r);
-  return r;
-}
-
-async function confirm(req, env, r) {
-  const { s, ok, flip } = await req.json();
-  if (s !== r.secret || r.status !== "review") return json({ error: "Not allowed." }, 403);
-  r.status = ok ? "live" : "discarded";
-  r.flip = !!flip; // Lux3D's swing direction can be backwards; the uploader corrects it here.
-  await putRound(env, r);
-  if (ok) {
-    const live = (await env.KV.get("list:live", "json")) || [];
-    await env.KV.put("list:live", JSON.stringify([...live, r.id]));
+async function forge(req, env) {
+  if (!forgeOpen(env)) return json({ error: "Forging is closed: the hackathon's Lux3D credits ended on 19 November." }, 403);
+  let b;
+  try { b = await req.json(); } catch { return json({ error: "Send JSON." }, 400); }
+  const o = POOL.find(o => o.id === b.object), part = b.part | 0, prompt = String(b.prompt ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
+  if (!o || part < 0 || part > 64 || !/^[a-z0-9]{8,16}$/.test(b.player || "")) return json({ error: "That fake has no object or player." }, 400);
+  if (prompt.length < 3) return json({ error: "Describe the fake part in a few words." }, 400);
+  const date = new Date().toISOString().slice(0, 10), ip = req.headers.get("CF-Connecting-IP") || "local";
+  // the per-address count keeps a hash, not the address
+  const ipHash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ip)))].slice(0, 8).map(x => x.toString(16).padStart(2, "0")).join("");
+  const day = `forged:${b.player}:${date}`, ipDay = `forgedip:${ipHash}:${date}`;
+  const [mine, fromIp, all] = (await Promise.all([day, ipDay, "forged"].map(k => env.KV.get(k)))).map(v => +v || 0);
+  if (mine >= FORGE_PER_DAY) return json({ error: `You have forged ${FORGE_PER_DAY} fakes today. The forge opens again tomorrow.` }, 429);
+  if (fromIp >= FORGE_PER_IP) return json({ error: `This connection has forged ${FORGE_PER_IP} fakes today. The forge opens again tomorrow.` }, 429);
+  if (all >= FORGE_CAP) return json({ error: "The forge has used its share of the hackathon's credits." }, 429);
+  // counted before the call, so a burst sees the count go up sooner; handed back if Lux3D refuses the job
+  const count = d => Promise.all([
+    env.KV.put(day, String(mine + d), { expirationTtl: 2 * 86400 }),
+    env.KV.put(ipDay, String(fromIp + d), { expirationTtl: 2 * 86400 }),
+    env.KV.put("forged", String(all + d)),
+  ]);
+  await count(1);
+  // the player's words, plus the object the part belongs to, so the fake is made in that object's style
+  const made = await lux(env, "/generate/text-to-3d/task/create", {
+    prompt: `${prompt}. A single part of a ${o.name.toLowerCase()}, on its own, product photo, plain background, no text.`,
+    version: "G1-Turbo", outputFormat: ["glb"], faceCount: 10000,
+  }).catch(() => null);
+  if (made?.c !== "0") {
+    await count(0);
+    return json({ error: `Lux3D did not take the job${made?.m ? ` (${String(made.m).slice(0, 120)})` : ""}. Try again in a minute.` }, 502);
   }
-  return json(view(r));
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(8)), x => "abcdefghijkmnpqrstuvwxyz23456789"[x % 32]).join("");
+  const fake = { id, task: made.d, player: b.player, object: o.id, part, prompt, name: nameOf(b.name), at: Date.now(), status: "making" };
+  await env.KV.put(`fake:${id}`, JSON.stringify(fake));
+  return json(pub(fake));
 }
-
-// ponytail: read-modify-write on one KV key; simultaneous guesses can drop one. Fine at demo scale.
-async function guess(req, env, r) {
-  if (r.status !== "live") return json({ error: "This round is not live." }, 403);
-  const { p, score } = await req.json();
-  if (!Array.isArray(p) || p.length !== 3 || !p.every(Number.isFinite) || !(score >= 0 && score <= 100)) return json({ error: "Bad guess." }, 400);
-  const all = (await env.KV.get(`guesses:${r.id}`, "json")) || [];
-  all.push({ p, score: Math.round(score) });
-  await env.KV.put(`guesses:${r.id}`, JSON.stringify(all.slice(-500)));
-  return json(all);
-}
-
-// Today's run: up to 5 live rounds, the same for everyone on a UTC date.
-async function today(env) {
-  const live = (await env.KV.get("list:live", "json")) || [];
-  const date = new Date().toISOString().slice(0, 10);
-  const hash = str => [...str].reduce((h, ch) => (Math.imul(h, 31) + ch.charCodeAt(0)) | 0, 7);
-  return json({ date, rounds: live.map(id => [hash(date + id), id]).sort((a, b) => a[0] - b[0]).slice(0, 5).map(x => x[1]) });
-}
-
-// KV values cap at 25 MB and some results are bigger, so ZIPs are stored as 20 MB chunks: file:<id>:part:<n> (renamed from :zip: so no edge cache holds an old copy).
-const CHUNK = 20e6;
-async function putZip(env, rid, buf) {
-  const n = Math.ceil(buf.byteLength / CHUNK);
-  for (let i = 0; i < n; i++) await env.KV.put(`file:${rid}:part:${i}`, buf.slice(i * CHUNK, (i + 1) * CHUNK));
-  await env.KV.put(`file:${rid}:parts`, String(n));
-}
-
-async function file(env, rid, name) {
-  const n = name === "model.zip" && +(await env.KV.get(`file:${rid}:parts`));
-  if (!n) return new Response("Not found", { status: 404 });
-  const headers = { "Content-Type": "application/zip", "Cache-Control": "public, max-age=86400" };
-  // One chunk: hand KV's stream straight to the response. Piping it through a JS TransformStream cut downloads short.
-  if (n === 1) return new Response(await env.KV.get(`file:${rid}:part:0`, "stream"), { headers });
-  const { readable, writable } = new TransformStream();
-  (async () => {
-    for (let i = 0; i < n; i++) await (await env.KV.get(`file:${rid}:part:${i}`, "stream")).pipeTo(writable, { preventClose: i < n - 1 });
-  })();
-  return new Response(readable, {
-    headers: { "Content-Type": "application/zip", "Cache-Control": "public, max-age=86400" },
-  });
+// A fake: making (Lux3D at work; each look asks Lux3D once) -> made (Lux3D's model is ready to fetch, for 2 hours) ->
+// ready (the forger's shrunk copy is in KV) or failed.
+async function fake(req, env, id, what) {
+  const f = /^[a-z0-9]{8}$/.test(id) && (await env.KV.get(`fake:${id}`, "json"));
+  if (!f) return json({ error: "No such fake." }, 404);
+  const save = () => env.KV.put(`fake:${id}`, JSON.stringify(f));
+  if (what === "glb" && req.method === "GET") {
+    const bytes = f.status === "ready" && (await env.KV.get(`fakeglb:${id}`, "arrayBuffer"));
+    return bytes ? new Response(bytes, { headers: { "Content-Type": "model/gltf-binary", "Cache-Control": "public, max-age=31536000, immutable" } }) : json({ error: "Not ready." }, 404);
+  }
+  if (what === "glb" && req.method === "POST") { // the forger's shrunk copy
+    if (f.status !== "made" || req.headers.get("X-Player") !== f.player) return json({ error: "Not yours to send, or not made yet." }, 403);
+    const bytes = await req.arrayBuffer();
+    if (bytes.byteLength > 4e6 || new TextDecoder().decode(bytes.slice(0, 4)) !== "glTF") return json({ error: "Send a GLB under 4 MB." }, 400);
+    await env.KV.put(`fakeglb:${id}`, bytes);
+    Object.assign(f, { status: "ready", size: bytes.byteLength });
+    await save();
+    return json(pub(f));
+  }
+  if (what === "raw") { // Lux3D's own model, passed through to the forger's page
+    const res = f.status === "made" && f.src ? await fetch(f.src).catch(() => null) : null;
+    if (res?.ok) return new Response(res.body, { headers: { "Content-Type": "model/gltf-binary" } });
+    // Lux3D's link lasts 2 hours; a fetch that fails before then can be tried again
+    if (f.status === "made" && Date.now() - f.at < 2 * 3600e3) return json({ error: "Lux3D's model could not be fetched. Try again." }, 502);
+    if (f.status === "made") { f.status = "failed"; await save(); }
+    return json({ error: "Lux3D's model is no longer there." }, 410);
+  }
+  if (f.status === "making" && env.AHOLO_API_KEY) {
+    const got = await lux(env, `/generate/task/get?taskid=${f.task}`).catch(() => null), s = got?.d?.status;
+    const outs = got?.d?.outputs || [], url = (outs.find(x => /\.glb(\?|$)/.test(x.content || "")) || outs[0])?.content;
+    if (s === 3 && url) Object.assign(f, { status: "made", src: url });
+    else if (s === 3 || s === 4 || s === 6 || Date.now() - f.at > 20 * 60e3) f.status = "failed";
+    if (f.status !== "making") await save();
+  }
+  return json(pub(f));
 }
 
 export default {
   async fetch(req, env) {
-    const url = new URL(req.url);
-    const [, a, b, c, d] = url.pathname.split("/");
-    if (a === "f" && b && c) return file(env, b, c);
-    if (a === "api" && b === "today") return today(env);
-    if (a !== "api" || b !== "rounds") return env.ASSETS.fetch(req);
-    if (!c) {
-      if (req.method === "POST") return create(req, env);
-      return json((await env.KV.get("list:live", "json")) || []);
-    }
-    let r = await getRound(env, c);
-    if (!r) return json({ error: "No such round." }, 404);
-    const owner = url.searchParams.get("s") === r.secret;
-    if (!d && req.method === "GET") {
-      if (owner) r = await advance(env, r);
-      else if (r.status !== "live") return json({ error: "This round is not live yet." }, 404);
-      const guesses = r.status === "live" ? (await env.KV.get(`guesses:${r.id}`, "json")) || [] : [];
-      return json({ ...view(r), guesses });
-    }
-    if (d === "confirm" && req.method === "POST") return confirm(req, env, r);
-    if (d === "guesses" && req.method === "POST") return guess(req, env, r);
-    return json({ error: "Not found." }, 404);
+    const [, a, b, c, d] = new URL(req.url).pathname.split("/");
+    if (a === "api" && b === "forge") return json({ open: forgeOpen(env) });
+    if (a === "api" && b === "fakes" && !c && req.method === "POST") return forge(req, env);
+    if (a === "api" && b === "fakes" && c) return fake(req, env, c, d);
+    if (a === "api" && b === "runs" && c) return runs(req, env, c);
+    if (a === "api" && b === "board") return json(await board(env));
+    if (a === "api" && b === "room" && /^[A-Z0-9]{4,8}$/.test(c || "")) return env.ROOM.get(env.ROOM.idFromName(c)).fetch(req);
+    if (a === "api") return json({ error: "Not found." }, 404);
+    return env.ASSETS.fetch(req);
   },
 };

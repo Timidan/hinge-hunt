@@ -1,0 +1,350 @@
+[
+  {
+    "id": "clipper",
+    "name": "Nail clipper",
+    "parts": 4,
+    "level": 4
+  },
+  {
+    "id": "stapler",
+    "name": "Stapler",
+    "parts": 5,
+    "level": 5
+  },
+  {
+    "id": "flytrap",
+    "name": "Venus flytrap",
+    "parts": 3,
+    "level": 2
+  },
+  {
+    "id": "mousetrap",
+    "name": "Mousetrap",
+    "parts": 4,
+    "level": 4
+  },
+  {
+    "id": "desklamp",
+    "name": "Desk lamp",
+    "parts": 4,
+    "level": 3
+  },
+  {
+    "id": "holepunch",
+    "name": "Hole punch",
+    "parts": 3,
+    "level": 2
+  },
+  {
+    "id": "padlock",
+    "name": "Padlock",
+    "parts": 2,
+    "level": 3
+  },
+  {
+    "id": "musicbox",
+    "name": "Music box",
+    "parts": 4,
+    "level": 3
+  },
+  {
+    "id": "toolbox",
+    "name": "Toolbox",
+    "parts": 6,
+    "level": 6
+  },
+  {
+    "id": "sharpener",
+    "name": "Pencil sharpener",
+    "parts": 7,
+    "level": 6
+  },
+  {
+    "id": "chest",
+    "name": "Treasure chest",
+    "parts": 13,
+    "level": 6
+  },
+  {
+    "id": "vise",
+    "name": "Bench vise",
+    "parts": 4,
+    "level": 3
+  },
+  {
+    "id": "corkscrew",
+    "name": "Corkscrew",
+    "parts": 3,
+    "level": 3
+  },
+  {
+    "id": "scissors",
+    "name": "Scissors",
+    "parts": 2,
+    "level": 1
+  },
+  {
+    "id": "pliers",
+    "name": "Pliers",
+    "parts": 2,
+    "level": 1
+  },
+  {
+    "id": "pruners",
+    "name": "Garden pruners",
+    "parts": 5,
+    "level": 4
+  },
+  {
+    "id": "telescope",
+    "name": "Telescope",
+    "parts": 5,
+    "level": 5
+  },
+  {
+    "id": "spray",
+    "name": "Spray bottle",
+    "parts": 3,
+    "level": 2
+  },
+  {
+    "id": "pump",
+    "name": "Bicycle pump",
+    "parts": 2,
+    "level": 2
+  },
+  {
+    "id": "pocketwatch",
+    "name": "Pocket watch",
+    "parts": 2,
+    "level": 1
+  },
+  {
+    "id": "laptop",
+    "name": "Laptop",
+    "parts": 4,
+    "level": 3
+  },
+  {
+    "id": "flipphone",
+    "name": "Flip phone",
+    "parts": 2,
+    "level": 1
+  },
+  {
+    "id": "radio",
+    "name": "Radio",
+    "parts": 3,
+    "level": 2
+  },
+  {
+    "id": "jackbox",
+    "name": "Jack-in-the-box",
+    "parts": 6,
+    "level": 5
+  },
+  {
+    "id": "metronome",
+    "name": "Metronome",
+    "parts": 4,
+    "level": 5
+  },
+  {
+    "id": "lantern",
+    "name": "Lantern",
+    "parts": 7,
+    "level": 6
+  },
+  {
+    "id": "toycar",
+    "name": "Toy car",
+    "parts": 7,
+    "level": 6
+  },
+  {
+    "id": "typewriter",
+    "name": "Typewriter",
+    "parts": 8,
+    "level": 6
+  },
+  {
+    "id": "telephone",
+    "name": "Telephone",
+    "parts": 4,
+    "level": 4
+  },
+  {
+    "id": "timer",
+    "name": "Kitchen timer",
+    "parts": 4,
+    "level": 3
+  },
+  {
+    "id": "globe",
+    "name": "Globe",
+    "parts": 3,
+    "level": 2
+  },
+  {
+    "id": "eggbeater",
+    "name": "Egg beater",
+    "parts": 5,
+    "level": 4
+  },
+  {
+    "id": "reel",
+    "name": "Fishing reel",
+    "parts": 3,
+    "level": 2
+  },
+  {
+    "id": "handdrill",
+    "name": "Hand drill",
+    "parts": 5,
+    "level": 5
+  },
+  {
+    "id": "grinder",
+    "name": "Coffee grinder",
+    "parts": 5,
+    "level": 5
+  },
+  {
+    "id": "tapemeasure",
+    "name": "Tape measure",
+    "parts": 2,
+    "level": 1
+  },
+  {
+    "id": "alarmclock",
+    "name": "Alarm clock",
+    "parts": 7,
+    "level": 6
+  },
+  {
+    "id": "canopener",
+    "name": "Can opener",
+    "parts": 3,
+    "level": 2
+  },
+  {
+    "id": "toaster",
+    "name": "Toaster",
+    "parts": 3,
+    "level": 2
+  },
+  {
+    "id": "pedalbin",
+    "name": "Pedal bin",
+    "parts": 4,
+    "level": 3
+  },
+  {
+    "id": "kettle",
+    "name": "Kettle",
+    "parts": 4,
+    "level": 3
+  },
+  {
+    "id": "chair",
+    "name": "Folding chair",
+    "parts": 5,
+    "level": 4
+  },
+  {
+    "id": "drawers",
+    "name": "Drawer unit",
+    "parts": 3,
+    "level": 2
+  },
+  {
+    "id": "spinner",
+    "name": "Salad spinner",
+    "parts": 5,
+    "level": 4
+  },
+  {
+    "id": "suitcase",
+    "name": "Suitcase",
+    "parts": 6,
+    "level": 5
+  },
+  {
+    "id": "wheelbarrow",
+    "name": "Wheelbarrow",
+    "parts": 2,
+    "level": 1
+  },
+  {
+    "id": "deskfan",
+    "name": "Desk fan",
+    "parts": 2,
+    "level": 1
+  },
+  {
+    "id": "gramophone",
+    "name": "Gramophone",
+    "parts": 4,
+    "level": 3
+  },
+  {
+    "id": "microscope",
+    "name": "Microscope",
+    "parts": 6,
+    "level": 5
+  },
+  {
+    "id": "dumptruck",
+    "name": "Dump truck",
+    "parts": 11,
+    "level": 6
+  },
+  {
+    "id": "wagon",
+    "name": "Toy wagon",
+    "parts": 8,
+    "level": 6
+  },
+  {
+    "id": "robot",
+    "name": "Wind-up robot",
+    "parts": 6,
+    "level": 5
+  },
+  {
+    "id": "catapult",
+    "name": "Toy catapult",
+    "parts": 13,
+    "level": 6
+  },
+  {
+    "id": "excavator",
+    "name": "Toy excavator",
+    "parts": 8,
+    "level": 6
+  },
+  {
+    "id": "lunchbox",
+    "name": "Lunch box",
+    "parts": 4,
+    "level": 3
+  },
+  {
+    "id": "scooter",
+    "name": "Kick scooter",
+    "parts": 4,
+    "level": 3
+  },
+  {
+    "id": "register",
+    "name": "Cash register",
+    "parts": 6,
+    "level": 5
+  },
+  {
+    "id": "piano",
+    "name": "Toy grand piano",
+    "parts": 8,
+    "level": 6
+  }
+]

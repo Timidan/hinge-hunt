@@ -1,0 +1,125 @@
+{
+ "root": "cabinet_body",
+ "joints": [
+  {
+   "name": "drawer_top_joint",
+   "type": "fixed",
+   "parent": "cabinet_body",
+   "child": "drawer_top",
+   "origin": [
+    0.0,
+    0.150271,
+    -0.0
+   ],
+   "axis": [
+    0.0,
+    0.0,
+    1.0
+   ],
+   "lower": 0.0,
+   "upper": 0.0
+  },
+  {
+   "name": "drawer_bottom_joint",
+   "type": "fixed",
+   "parent": "cabinet_body",
+   "child": "drawer_bottom",
+   "origin": [
+    0.0,
+    0.150271,
+    -0.0
+   ],
+   "axis": [
+    0.0,
+    0.0,
+    1.0
+   ],
+   "lower": 0.0,
+   "upper": 0.0
+  },
+  {
+   "name": "drawer_middle_joint",
+   "type": "prismatic",
+   "parent": "cabinet_body",
+   "child": "drawer_middle",
+   "origin": [
+    0.003177,
+    0.137998,
+    0.122511
+   ],
+   "axis": [
+    0.0,
+    0.0,
+    1.0
+   ],
+   "lower": -0.152802,
+   "upper": 0.110363
+  }
+ ],
+ "parts": [
+  {
+   "i": 0,
+   "link": "cabinet_body",
+   "share": 0.646,
+   "fit": 0.007091,
+   "centre": [
+    0.0,
+    0.0,
+    -0.08732
+   ],
+   "size": [
+    0.50453,
+    0.55,
+    0.38521
+   ]
+  },
+  {
+   "i": 1,
+   "link": "cabinet_body",
+   "share": 0.62,
+   "fit": 0.021772,
+   "centre": [
+    0.00014,
+    0.17505,
+    0.11162
+   ],
+   "size": [
+    0.45191,
+    0.15381,
+    0.03345
+   ]
+  },
+  {
+   "i": 2,
+   "link": "drawer_middle",
+   "share": 0.524,
+   "fit": 0.039561,
+   "centre": [
+    0.00674,
+    -0.00145,
+    0.11006
+   ],
+   "size": [
+    0.46076,
+    0.16279,
+    0.33972
+   ]
+  },
+  {
+   "i": 3,
+   "link": "cabinet_body",
+   "share": 0.664,
+   "fit": 0.026022,
+   "centre": [
+    3e-05,
+    -0.17372,
+    0.11065
+   ],
+   "size": [
+    0.45207,
+    0.15466,
+    0.03501
+   ]
+  }
+ ]
+}

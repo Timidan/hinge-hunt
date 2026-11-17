@@ -3,3 +3,20 @@ spike/out/
 spike/slim/
 spike/bench.js
 spike/iso-kit.mjs
+# research, ideation and the hackathon brief stay private
+research/
+HACKATHON.md
+.agy-staff/
+spike/node_modules/
+# design notes, mocks and samples stay private too: the repo is the code and its documentation
+DESIGN.md
+design.md
+app/public/samples/
+spike/winners.html
+spike/mocks.html
+spike/board.html
+spike/blind.html
+spike/contact.html
+spike/screen.html
+spike/bench-preview.html
+spike/bench3d.html

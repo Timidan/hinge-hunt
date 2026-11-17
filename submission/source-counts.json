@@ -1,0 +1,475 @@
+{
+  "method": "Objects = index entries. Split parts = lengths of parts arrays, including bases and merged entries. Moving joints = non-fixed joints.",
+  "totals": {
+    "objects": 58,
+    "split_parts": 337,
+    "moving_joints": 65,
+    "merged_part_entries": 2
+  },
+  "objects": [
+    {
+      "id": "clipper",
+      "name": "Nail clipper",
+      "file": "app/public/objects/clipper/rig.json",
+      "parts": 5,
+      "moving_joints": 2,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "stapler",
+      "name": "Stapler",
+      "file": "app/public/objects/stapler/rig.json",
+      "parts": 6,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "flytrap",
+      "name": "Venus flytrap",
+      "file": "app/public/objects/flytrap/rig.json",
+      "parts": 4,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "mousetrap",
+      "name": "Mousetrap",
+      "file": "app/public/objects/mousetrap/rig.json",
+      "parts": 6,
+      "moving_joints": 1,
+      "merged_part_entries": 1
+    },
+    {
+      "id": "desklamp",
+      "name": "Desk lamp",
+      "file": "app/public/objects/desklamp/rig.json",
+      "parts": 5,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "holepunch",
+      "name": "Hole punch",
+      "file": "app/public/objects/holepunch/rig.json",
+      "parts": 4,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "padlock",
+      "name": "Padlock",
+      "file": "app/public/objects/padlock/rig.json",
+      "parts": 3,
+      "moving_joints": 2,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "musicbox",
+      "name": "Music box",
+      "file": "app/public/objects/musicbox/rig.json",
+      "parts": 5,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "toolbox",
+      "name": "Toolbox",
+      "file": "app/public/objects/toolbox/rig.json",
+      "parts": 7,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "sharpener",
+      "name": "Pencil sharpener",
+      "file": "app/public/objects/sharpener/rig.json",
+      "parts": 8,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "chest",
+      "name": "Treasure chest",
+      "file": "app/public/objects/chest/rig.json",
+      "parts": 15,
+      "moving_joints": 1,
+      "merged_part_entries": 1
+    },
+    {
+      "id": "vise",
+      "name": "Bench vise",
+      "file": "app/public/objects/vise/rig.json",
+      "parts": 5,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "corkscrew",
+      "name": "Corkscrew",
+      "file": "app/public/objects/corkscrew/rig.json",
+      "parts": 4,
+      "moving_joints": 2,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "scissors",
+      "name": "Scissors",
+      "file": "app/public/objects/scissors/rig.json",
+      "parts": 3,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "pliers",
+      "name": "Pliers",
+      "file": "app/public/objects/pliers/rig.json",
+      "parts": 3,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "pruners",
+      "name": "Garden pruners",
+      "file": "app/public/objects/pruners/rig.json",
+      "parts": 6,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "telescope",
+      "name": "Telescope",
+      "file": "app/public/objects/telescope/rig.json",
+      "parts": 6,
+      "moving_joints": 2,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "spray",
+      "name": "Spray bottle",
+      "file": "app/public/objects/spray/rig.json",
+      "parts": 4,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "pump",
+      "name": "Bicycle pump",
+      "file": "app/public/objects/pump/rig.json",
+      "parts": 3,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "pocketwatch",
+      "name": "Pocket watch",
+      "file": "app/public/objects/pocketwatch/rig.json",
+      "parts": 3,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "laptop",
+      "name": "Laptop",
+      "file": "app/public/objects/laptop/rig.json",
+      "parts": 5,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "flipphone",
+      "name": "Flip phone",
+      "file": "app/public/objects/flipphone/rig.json",
+      "parts": 3,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "radio",
+      "name": "Radio",
+      "file": "app/public/objects/radio/rig.json",
+      "parts": 4,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "jackbox",
+      "name": "Jack-in-the-box",
+      "file": "app/public/objects/jackbox/rig.json",
+      "parts": 7,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "metronome",
+      "name": "Metronome",
+      "file": "app/public/objects/metronome/rig.json",
+      "parts": 5,
+      "moving_joints": 3,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "lantern",
+      "name": "Lantern",
+      "file": "app/public/objects/lantern/rig.json",
+      "parts": 8,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "toycar",
+      "name": "Toy car",
+      "file": "app/public/objects/toycar/rig.json",
+      "parts": 8,
+      "moving_joints": 2,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "typewriter",
+      "name": "Typewriter",
+      "file": "app/public/objects/typewriter/rig.json",
+      "parts": 9,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "telephone",
+      "name": "Telephone",
+      "file": "app/public/objects/telephone/rig.json",
+      "parts": 5,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "timer",
+      "name": "Kitchen timer",
+      "file": "app/public/objects/timer/rig.json",
+      "parts": 5,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "globe",
+      "name": "Globe",
+      "file": "app/public/objects/globe/rig.json",
+      "parts": 4,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "eggbeater",
+      "name": "Egg beater",
+      "file": "app/public/objects/eggbeater/rig.json",
+      "parts": 6,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "reel",
+      "name": "Fishing reel",
+      "file": "app/public/objects/reel/rig.json",
+      "parts": 4,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "handdrill",
+      "name": "Hand drill",
+      "file": "app/public/objects/handdrill/rig.json",
+      "parts": 6,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "grinder",
+      "name": "Coffee grinder",
+      "file": "app/public/objects/grinder/rig.json",
+      "parts": 6,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "tapemeasure",
+      "name": "Tape measure",
+      "file": "app/public/objects/tapemeasure/rig.json",
+      "parts": 3,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "alarmclock",
+      "name": "Alarm clock",
+      "file": "app/public/objects/alarmclock/rig.json",
+      "parts": 8,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "canopener",
+      "name": "Can opener",
+      "file": "app/public/objects/canopener/rig.json",
+      "parts": 4,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "toaster",
+      "name": "Toaster",
+      "file": "app/public/objects/toaster/rig.json",
+      "parts": 4,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "pedalbin",
+      "name": "Pedal bin",
+      "file": "app/public/objects/pedalbin/rig.json",
+      "parts": 5,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "kettle",
+      "name": "Kettle",
+      "file": "app/public/objects/kettle/rig.json",
+      "parts": 5,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "chair",
+      "name": "Folding chair",
+      "file": "app/public/objects/chair/rig.json",
+      "parts": 6,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "drawers",
+      "name": "Drawer unit",
+      "file": "app/public/objects/drawers/rig.json",
+      "parts": 4,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "spinner",
+      "name": "Salad spinner",
+      "file": "app/public/objects/spinner/rig.json",
+      "parts": 6,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "suitcase",
+      "name": "Suitcase",
+      "file": "app/public/objects/suitcase/rig.json",
+      "parts": 7,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "wheelbarrow",
+      "name": "Wheelbarrow",
+      "file": "app/public/objects/wheelbarrow/rig.json",
+      "parts": 3,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "deskfan",
+      "name": "Desk fan",
+      "file": "app/public/objects/deskfan/rig.json",
+      "parts": 3,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "gramophone",
+      "name": "Gramophone",
+      "file": "app/public/objects/gramophone/rig.json",
+      "parts": 5,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "microscope",
+      "name": "Microscope",
+      "file": "app/public/objects/microscope/rig.json",
+      "parts": 7,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "dumptruck",
+      "name": "Dump truck",
+      "file": "app/public/objects/dumptruck/rig.json",
+      "parts": 12,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "wagon",
+      "name": "Toy wagon",
+      "file": "app/public/objects/wagon/rig.json",
+      "parts": 9,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "robot",
+      "name": "Wind-up robot",
+      "file": "app/public/objects/robot/rig.json",
+      "parts": 7,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "catapult",
+      "name": "Toy catapult",
+      "file": "app/public/objects/catapult/rig.json",
+      "parts": 14,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "excavator",
+      "name": "Toy excavator",
+      "file": "app/public/objects/excavator/rig.json",
+      "parts": 9,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "lunchbox",
+      "name": "Lunch box",
+      "file": "app/public/objects/lunchbox/rig.json",
+      "parts": 5,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "scooter",
+      "name": "Kick scooter",
+      "file": "app/public/objects/scooter/rig.json",
+      "parts": 5,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "register",
+      "name": "Cash register",
+      "file": "app/public/objects/register/rig.json",
+      "parts": 7,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    },
+    {
+      "id": "piano",
+      "name": "Toy grand piano",
+      "file": "app/public/objects/piano/rig.json",
+      "parts": 9,
+      "moving_joints": 1,
+      "merged_part_entries": 0
+    }
+  ]
+}

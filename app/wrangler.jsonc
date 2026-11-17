@@ -2,8 +2,10 @@
   "name": "hinge-hunt",
   "main": "src/worker.js",
   "compatibility_date": "2026-10-01",
-  "assets": { "directory": "public", "run_worker_first": ["/api/*", "/f/*"] },
-  "kv_namespaces": [{ "binding": "KV", "id": "1d6e4bfe5e9d4a4aaf972c86cedc546f" }],
-  // Each new round costs ~29 Lux3D credits; creation closes after this many.
-  "vars": { "MAX_ROUNDS": "10" }
+  "workers_dev": true,
+  "routes": [{ "pattern": "hingehunt.timidan.xyz", "custom_domain": true }],
+  "assets": { "directory": "public", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
+  "durable_objects": { "bindings": [{ "name": "ROOM", "class_name": "Room" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Room"] }],
+  "kv_namespaces": [{ "binding": "KV", "id": "1d6e4bfe5e9d4a4aaf972c86cedc546f" }]
 }
